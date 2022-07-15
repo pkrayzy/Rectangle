@@ -5,11 +5,10 @@
 //  Created by Ryan Hanson on 6/13/19.
 //  Copyright © 2019 Ryan Hanson. All rights reserved.
 //
-
 import Cocoa
 
 class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation {
-
+    
     let almostMaximizeHeight: CGFloat
     let almostMaximizeWidth: CGFloat
 
@@ -57,9 +56,9 @@ class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCal
         
         rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction))
         rect.size.height = round(visibleFrameOfScreen.height * almostMaximizeHeight)
+        rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         if params.action == .rightHalf {
             rect.origin.x = visibleFrameOfScreen.maxX - rect.width
-            rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         }
         
         return RectResult(rect)
