@@ -8,8 +8,8 @@
 
 import Cocoa
 
-class AlmostMaximizeCalculation: WindowCalculation {
-    
+class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation {
+
     let almostMaximizeHeight: CGFloat
     let almostMaximizeWidth: CGFloat
 
@@ -24,8 +24,6 @@ class AlmostMaximizeCalculation: WindowCalculation {
             ? 0.9
             : CGFloat(defaultWidth)
     }
-
-class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation {
     
     override func calculate(_ params: WindowCalculationParameters) -> WindowCalculationResult? {
         
