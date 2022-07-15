@@ -8,6 +8,23 @@
 
 import Cocoa
 
+class AlmostMaximizeCalculation: WindowCalculation {
+    
+    let almostMaximizeHeight: CGFloat
+    let almostMaximizeWidth: CGFloat
+
+    override init() {
+        let defaultHeight = Defaults.almostMaximizeHeight.value
+        almostMaximizeHeight = (defaultHeight <= 0 || defaultHeight > 1)
+            ? 0.9
+            : CGFloat(defaultHeight)
+
+        let defaultWidth = Defaults.almostMaximizeWidth.value
+        almostMaximizeWidth = (defaultWidth <= 0 || defaultWidth > 1)
+            ? 0.9
+            : CGFloat(defaultWidth)
+    }
+
 class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation {
     
     override func calculate(_ params: WindowCalculationParameters) -> WindowCalculationResult? {
@@ -41,8 +58,10 @@ class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCal
         var rect = visibleFrameOfScreen
         
         rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction))
+        rect.size.height = round(visibleFrameOfScreen.height * almostMaximizeHeight)
         if params.action == .rightHalf {
             rect.origin.x = visibleFrameOfScreen.maxX - rect.width
+            rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         }
         
         return RectResult(rect)
