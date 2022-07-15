@@ -51,7 +51,7 @@ class CenterHalfCalculation: WindowCalculation, OrientationAware, RepeatedExecut
         
         // Center
         rect.origin.x = round((visibleFrameOfScreen.width - rect.width) / 2.0) + visibleFrameOfScreen.minX
-        rect.origin.y = round((visibleFrameOfScreen.height - calculatedWindowRect.height) / 2.0) + visibleFrameOfScreen.minY
+        rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         
         return RectResult(rect, subAction: .centerVerticalHalf)
     }
@@ -65,7 +65,7 @@ class CenterHalfCalculation: WindowCalculation, OrientationAware, RepeatedExecut
         
         // Center
         rect.origin.x = round((visibleFrameOfScreen.width - rect.width) / 2.0) + visibleFrameOfScreen.minX
-        rect.origin.y = round((visibleFrameOfScreen.height - calculatedWindowRect.height) / 2.0) + visibleFrameOfScreen.minY
+        rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         
         return RectResult(rect, subAction: .centerHorizontalHalf)
     }
