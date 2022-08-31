@@ -35,10 +35,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var quitMenuItem: NSMenuItem!
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        Defaults.loadFromSupportDir()
         if let lastVersion = Defaults.lastVersion.value,
            let intLastVersion = Int(lastVersion) {
             if intLastVersion < 46 {
                 MASShortcutMigration.migrate()
+            }
+            if intLastVersion < 64 {
+                SnapAreaModel.instance.migrate()
             }
         }
         
@@ -86,6 +90,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         })
     }
     
+    func applicationWillBecomeActive(_ notification: Notification) {
+        Notification.Name.appWillBecomeActive.post()
+    }
+    
     func checkAutoCheckForUpdates() {
         SUUpdater.shared()?.automaticallyChecksForUpdates = Defaults.SUEnableAutomaticChecks.enabled
     }
@@ -124,7 +132,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard !Defaults.windowSnapping.userDisabled, !Defaults.notifiedOfProblemApps.enabled else { return }
         
         let problemBundleIds: [String] = [
-            "com.mathworks.matlab", "com.live2d.cubism.CECubismEditorApp"
+            "com.mathworks.matlab", "com.live2d.cubism.CECubismEditorApp", "com.aquafold.datastudio.DataStudio"
         ]
         
         // these apps are java based with dynamic bundleIds

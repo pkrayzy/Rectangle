@@ -69,6 +69,8 @@ class Defaults {
     static let cascadeAllDeltaSize = FloatDefault(key: "cascadeAllDeltaSize", defaultValue: 30)
     static let sixthsSnapArea = OptionalBoolDefault(key: "sixthsSnapArea")
     static let stageSize = FloatDefault(key: "stageSize", defaultValue: 190)
+    static let landscapeSnapAreas = JSONDefault<[Directional:SnapAreaConfig]>(key: "landscapeSnapAreas")
+    static let portraitSnapAreas = JSONDefault<[Directional:SnapAreaConfig]>(key: "portraitSnapAreas")
 
     static var array: [Default] = [
         launchOnLogin,
@@ -128,7 +130,9 @@ class Defaults {
         shortEdgeSnapAreaSize,
         cascadeAllDeltaSize,
         sixthsSnapArea,
-        stageSize
+        stageSize,
+        landscapeSnapAreas,
+        portraitSnapAreas
     ]
 }
 
@@ -337,6 +341,15 @@ class JSONDefault<T: Codable>: StringDefault {
         super.init(key: key)
         loadFromJSON()
         typeInitialized = true
+    }
+    
+    override func load(from codable: CodableDefault) {
+        if value != codable.string {
+            value = codable.string
+            typeInitialized = false
+            loadFromJSON()
+            typeInitialized = true
+        }
     }
     
     private func loadFromJSON() {

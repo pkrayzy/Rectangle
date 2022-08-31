@@ -5,7 +5,7 @@
 
 Rectangle is a window management app based on Spectacle, written in Swift.
 
-![Screenshot](https://user-images.githubusercontent.com/13651296/101402672-57ab5300-38d4-11eb-9e8c-6a3147d26711.png)
+![Screenshot](https://user-images.githubusercontent.com/13651296/183785536-a67a2e2a-7c55-4c19-9bf8-482e734b1632.png)
 
 ## System Requirements
 
@@ -91,6 +91,12 @@ If windows aren't resizing or moving as you expect, here's some initial steps to
 1. Hold down the alt (option) key with the Rectangle menu open.
 1. Select the "View Logging..." menu item, which is in place of the "About" menu item.
 1. Logging will appear in the window as you perform Rectangle commands.
+
+## Import & export JSON config
+
+There are buttons for importing and exporting the config as a JSON file in the settings tab of the preferences window. 
+
+Upon launch, Rectangle will load a config file at `~/Library/Application Support/Rectangle/RectangleConfig.json` if it is present and will rename that file with a time/date stamp so that it isn't read on subsequent launches.
 
 ## Preferences Storage
 

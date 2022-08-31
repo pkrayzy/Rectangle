@@ -1,12 +1,11 @@
 {
   "images" : [
     {
-      "filename" : "keyboardToolbarTemplateSmall.png",
+      "filename" : "wallpaperTigerVertical.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "keyboardToolbarTemplate.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
