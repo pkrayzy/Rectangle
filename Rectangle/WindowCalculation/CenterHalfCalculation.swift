@@ -16,12 +16,12 @@ class CenterHalfCalculation: WindowCalculation, OrientationAware, RepeatedExecut
     override init() {
         let defaultHeight = Defaults.almostMaximizeHeight.value
         almostMaximizeHeight = (defaultHeight <= 0 || defaultHeight > 1)
-            ? 0.9
+            ? 0.95
             : CGFloat(defaultHeight)
 
         let defaultWidth = Defaults.almostMaximizeWidth.value
         almostMaximizeWidth = (defaultWidth <= 0 || defaultWidth > 1)
-            ? 0.9
+            ? 0.95
             : CGFloat(defaultWidth)
     }
     

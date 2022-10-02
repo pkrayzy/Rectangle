@@ -21,12 +21,12 @@ extension RepeatedExecutionsInThirdsCalculation {
     }
     
     func calculateSecondRect(_ params: RectCalculationParameters) -> RectResult {
-        let fraction: Float = Defaults.altThirdCycle.userEnabled ? (1 / 3.0) : (2 / 3.0)
+        let fraction: Float = Defaults.altThirdCycle.userEnabled ? (1 / 3.0) : (3 / 4.0)
         return calculateFractionalRect(params, fraction: fraction)
     }
     
     func calculateThirdRect(_ params: RectCalculationParameters) -> RectResult {
-        let fraction: Float = Defaults.altThirdCycle.userEnabled ? (2 / 3.0) : (1 / 3.0)
+        let fraction: Float = Defaults.altThirdCycle.userEnabled ? (3 / 4.0) : (1 / 3.0)
         return calculateFractionalRect(params, fraction: fraction)
     }
     
