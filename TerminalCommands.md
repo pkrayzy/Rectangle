@@ -1,6 +1,6 @@
 # Rectangle Terminal Commands for Hidden Preferences
 
-The preferences window is purposefully slim, but there's a lot that can be modified via Terminal. After executing a terminal command, restart the app as these values are loaded on application startup.
+The preferences window is purposefully slim, but there's a lot that can be modified via Terminal. After executing a terminal command, restart the app as these values are loaded on application startup. For Rectangle Pro, please replace `com.knollsoft.Rectangle` with `com.knollsoft.Hookshot` for the following commands.
 
 ## Keyboard Shortcuts
 
@@ -319,4 +319,16 @@ There's an option in the UI for moving the cursor with the window when going acr
 
 ```bash
 defaults write com.knollsoft.Rectangle moveCursor -int 1
+```
+
+## Prevent a window that is quickly dragged above the menu bar from going into Mission Control
+
+Important: This can cause issues with dragging and dropping in certain apps like Adobe Illustrator, and can affect text selection in a select few apps as well. 
+
+Windows that are slowly moved above the menu bar will still go into Mission Control.
+
+Once this is enabled, the checkbox for it is visible in the Snap Areas tab of the Preferences window.
+
+```bash
+defaults write com.knollsoft.Rectangle missionControlDragging -int 1
 ```

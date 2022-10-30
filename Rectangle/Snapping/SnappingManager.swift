@@ -28,6 +28,8 @@ class SnappingManager {
     var initialWindowRect: CGRect?
     var currentSnapArea: SnapArea?
     var dragPrevY: Double?
+    var dragRestrictionExpirationTimestamp: UInt64 = 0
+    var dragRestrictionExpired: Bool { DispatchTime.now().uptimeMilliseconds > dragRestrictionExpirationTimestamp }
     
     var box: FootprintWindow?
 
@@ -148,7 +150,14 @@ class SnappingManager {
             dragPrevY = nil
         case .leftMouseDragged:
             if let cgEvent = event.cgEvent {
-                if cgEvent.location.y == 0 && dragPrevY == 0 && event.deltaY < -25 { cgEvent.location.y = 1 }
+                if cgEvent.location.y == 0 && dragPrevY == 0 {
+                    if event.deltaY < -25 {
+                        cgEvent.location.y = 1
+                        dragRestrictionExpirationTimestamp = DispatchTime.now().uptimeMilliseconds + 250
+                    } else if !dragRestrictionExpired {
+                        cgEvent.location.y = 1
+                    }
+                }
                 dragPrevY = cgEvent.location.y
             }
         default:
