@@ -6,7 +6,7 @@
 "08q-Ce-1QL.title" = "Últims dos terços";
 
 /* Class = "NSTextFieldCell"; title = "Top Right"; ObjectID = "0Ak-33-SM7"; */
-"0Ak-33-SM7.title" = "A dalt a la dreta";
+"0Ak-33-SM7.title" = "Superior dreta";
 
 /* Class = "NSTextFieldCell"; title = "Move Down"; ObjectID = "1Rc-Od-eP5"; */
 "1Rc-Od-eP5.title" = "Moure fins a baix";
@@ -720,3 +720,6 @@
 "Go to System Settings → Privacy & Security → Accessibility" = "Go to System Settings → Privacy & Security → Accessibility";
 
 "Open System Settings" = "Open System Settings";
+
+/* Class = "NSButtonCell"; title = "Animate footprint"; ObjectID = "kx2-tZ-lk8"; */
+"kx2-tZ-lk8.title" = "Animate footprint";

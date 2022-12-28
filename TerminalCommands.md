@@ -2,6 +2,33 @@
 
 The preferences window is purposefully slim, but there's a lot that can be modified via Terminal. After executing a terminal command, restart the app as these values are loaded on application startup. For Rectangle Pro, please replace `com.knollsoft.Rectangle` with `com.knollsoft.Hookshot` for the following commands.
 
+## Contents
+
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Adjust Behavior on Repeated Commands](#adjust-behavior-on-repeated-commands)
+- [Cycle thirds on repeated Center Half commands](#cycle-thirds-on-repeated-center-half-commands)
+- [Resize on Directional Move](#resize-on-directional-move)
+- [Enable Todo Mode](#enable-todo-mode)
+- [Only allow drag-to-snap when modifier keys are pressed](#only-allow-drag-to-snap-when-modifier-keys-are-pressed)
+- [Almost Maximize](#almost-maximize)
+- [Add an extra centering command with custom size](#add-an-extra-centering-command-with-custom-size)
+- [Add extra "ninths" sizing commands](#add-extra-ninths-sizing-commands)
+- [Add extra "eighths" sizing commands](#add-extra-eighths-sizing-commands)
+- [Add additional "thirds" sizing commands](#add-additional-thirds-sizing-commands)
+- [Modify the "footprint" displayed for drag to snap area](#modify-the-footprint-displayed-for-drag-to-snap-area)
+- [Move Up/Down/Left/Right: Don't center on edge](#move-updownleftright-dont-center-on-edge)
+- [Make Smaller limits](#make-smaller-limits)
+- [Make Smaller/Make Larger size increments](#make-smallermake-larger-size-increments)
+- [Make Smaller/Make Larger "curtain resize" with gaps](#make-smallermake-larger-curtain-resize-with-gaps)
+- [Disabling window restore when moving windows](#disabling-window-restore-when-moving-windows)
+- [Changing the margin for the snap areas](#changing-the-margin-for-the-snap-areas)
+- [Setting gaps at the screen edges](#setting-gaps-at-the-screen-edges)
+- [Ignore specific drag to snap areas](#ignore-specific-drag-to-snap-areas)
+- [Disabling gaps when maximizing](#disabling-gaps-when-maximizing)
+- [Enabling snap areas for sixths](#enabling-snap-areas-for-sixths)
+- [Move cursor with window](#move-cursor-with-window)
+- [Prevent a window that is quickly dragged above the menu bar from going into Mission Control](#prevent-a-window-that-is-quickly-dragged-above-the-menu-bar-from-going-into-mission-control)
+
 ## Keyboard Shortcuts
 
 If you wish to change the default shortcuts after first launch click "Restore Default Shortcuts" in the settings tab of the preferences window. Alternatively you can set it with the following terminal command followed by app restart. True is for the recommended shortcuts, false is for Spectacle's.
@@ -47,6 +74,20 @@ Note that if subsequent execution mode is set to cycle displays when this is ena
 
 ```bash
 defaults write com.knollsoft.Rectangle resizeOnDirectionalMove -bool true
+```
+
+## Adjust macOS Ventura Stage Manager size
+
+By default, the Stage Manager area will be set to 190, if enabled.
+
+```bash
+defaults write com.knollsoft.Rectangle stageSize -float <VALUE>
+```
+
+To set it to a proportion of your screen's width, set it to a value between 0 and 1.
+
+```bash
+defaults write com.knollsoft.Rectangle stageSize -float <VALUE_BETWEEN_0_AND_1>
 ```
 
 ## Enable Todo Mode
@@ -145,7 +186,7 @@ defaults write com.knollsoft.Rectangle topLeftEighth -dict-add keyCode -float 18
 
 ## Add additional "thirds" sizing commands 
 
-These commands for resizing to non-standard screen thirds are not available in the UI but can be configured via CLI.
+These commands for resizing to corner two-thirds are not available in the UI but can be configured via CLI.
 
 The key codes are:
 
@@ -154,7 +195,9 @@ The key codes are:
 * bottomLeftThird
 * bottomRightThird
 
-For example, the command for setting the top left third shortcut to `ctrl opt shift 1` would be:
+(these correspond to two-thirds, and when repeated will cycle through each of the calculations)
+
+For example, the command for setting the top left two-thirds shortcut to `ctrl opt shift 1` would be:
 
 ```bash
 defaults write com.knollsoft.Rectangle topLeftThird -dict-add keyCode -float 18 modifierFlags -float 917504
@@ -184,6 +227,12 @@ Change the color.
 
 ```bash
 defaults write com.knollsoft.Rectangle footprintColor -string "{\"red\":0,\"blue\":0.5,\"green\":0.5}"
+```
+
+Change the animation duration. The value is a multiplier. Default is 0 (no animation).
+
+```bash
+defaults write com.knollsoft.Rectangle footprintAnimationDurationMultiplier -float <MULTIPLIER>
 ```
 
 ## Move Up/Down/Left/Right: Don't center on edge
@@ -330,5 +379,17 @@ Windows that are slowly moved above the menu bar will still go into Mission Cont
 Once this is enabled, the checkbox for it is visible in the Snap Areas tab of the Preferences window.
 
 ```bash
-defaults write com.knollsoft.Rectangle missionControlDragging -int 1
+defaults write com.knollsoft.Rectangle missionControlDragging -int 2
+```
+
+Change the allowed off-screen distance. The value is in pixels and is tied to the speed. Default is 25.
+
+```bash
+defaults write com.knollsoft.Rectangle missionControlDraggingAllowedOffscreenDistance -float <DISTANCE>
+```
+
+Change the disallowed duration. The value is in milliseconds. Default is 250.
+
+```bash
+defaults write com.knollsoft.Rectangle missionControlDraggingDisallowedDuration -int <DURATION>
 ```

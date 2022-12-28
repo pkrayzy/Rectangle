@@ -10,6 +10,7 @@ import Cocoa
 
 struct SnapArea: Equatable {
     let screen: NSScreen
+    let directional: Directional
     let action: WindowAction
 }
 
@@ -94,7 +95,7 @@ class SnappingManager {
     }
     
     func checkFullScreen() {
-        isFullScreen = AccessibilityElement.frontmostWindow()?.isFullScreen() == true
+        isFullScreen = AccessibilityElement.getFrontWindowElement()?.isFullScreen == true
         toggleListening()
     }
     
@@ -151,9 +152,9 @@ class SnappingManager {
         case .leftMouseDragged:
             if let cgEvent = event.cgEvent {
                 if cgEvent.location.y == 0 && dragPrevY == 0 {
-                    if event.deltaY < -25 {
+                    if event.deltaY < -Defaults.missionControlDraggingAllowedOffscreenDistance.cgFloat {
                         cgEvent.location.y = 1
-                        dragRestrictionExpirationTimestamp = DispatchTime.now().uptimeMilliseconds + 250
+                        dragRestrictionExpirationTimestamp = DispatchTime.now().uptimeMilliseconds + UInt64(Defaults.missionControlDraggingDisallowedDuration.value)
                     } else if !dragRestrictionExpired {
                         cgEvent.location.y = 1
                     }
@@ -166,13 +167,27 @@ class SnappingManager {
         return false
     }
     
+    func canSnap(_ event: NSEvent) -> Bool {
+        if Defaults.snapModifiers.value > 0 {
+            if event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue != Defaults.snapModifiers.value {
+                return false
+            }
+        }
+        if let windowId = windowId {
+            if StageUtil.stageCapable && StageUtil.stageEnabled && StageUtil.getStageStripWindowGroup(windowId) != nil {
+                return false
+            }
+        }
+        return true
+    }
+    
     func handle(event: NSEvent) {
         switch event.type {
         case .leftMouseDown:
             if !Defaults.obtainWindowOnClick.userDisabled {
-                windowElement = AccessibilityElement.windowUnderCursor()
-                windowId = windowElement?.getIdentifier()
-                initialWindowRect = windowElement?.rectOfElement()
+                windowElement = AccessibilityElement.getWindowElementUnderCursor()
+                windowId = windowElement?.getWindowId()
+                initialWindowRect = windowElement?.frame
             }
         case .leftMouseUp:
             if let currentSnapArea = self.currentSnapArea {
@@ -183,7 +198,7 @@ class SnappingManager {
                 // it's possible that the window has moved, but the mouse dragged events are not getting the updated window position
                 // this typically only happens if the user is dragging and dropping windows really quickly
                 // in this scenario, the footprint doesn't display but the snap will still occur, as long as the window position is updated as of mouse up.
-                if let currentRect = windowElement?.rectOfElement(),
+                if let currentRect = windowElement?.frame,
                    let windowId = windowId,
                    currentRect.size == initialWindowRect?.size,
                    currentRect.origin != initialWindowRect?.origin {
@@ -192,8 +207,7 @@ class SnappingManager {
                     
                     if let snapArea = snapAreaContainingCursor(priorSnapArea: currentSnapArea)  {
                         box?.close()
-                        if !(Defaults.snapModifiers.value > 0) ||
-                            event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue == Defaults.snapModifiers.value {
+                        if canSnap(event) {
                             snapArea.action.postSnap(windowElement: windowElement, windowId: windowId, screen: snapArea.screen)
                         }
                         self.currentSnapArea = nil
@@ -214,14 +228,14 @@ class SnappingManager {
                     }
                 }
                 if windowElement == nil {
-                    windowElement = AccessibilityElement.windowUnderCursor()
+                    windowElement = AccessibilityElement.getWindowElementUnderCursor()
                 }
-                windowId = windowElement?.getIdentifier()
-                initialWindowRect = windowElement?.rectOfElement()
+                windowId = windowElement?.getWindowId()
+                initialWindowRect = windowElement?.frame
                 windowIdAttempt += 1
                 lastWindowIdAttempt = event.timestamp
             }
-            guard let currentRect = windowElement?.rectOfElement(),
+            guard let currentRect = windowElement?.frame,
                 let windowId = windowId
             else { return }
             
@@ -237,14 +251,12 @@ class SnappingManager {
                 }
             }
             if windowMoving {
-                if Defaults.snapModifiers.value > 0 {
-                    if event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue != Defaults.snapModifiers.value {
-                        if currentSnapArea != nil {
-                            box?.close()
-                            currentSnapArea = nil
-                        }
-                        return
+                if !canSnap(event) {
+                    if currentSnapArea != nil {
+                        box?.close()
+                        currentSnapArea = nil
                     }
+                    return
                 }
                 
                 if let snapArea = snapAreaContainingCursor(priorSnapArea: currentSnapArea) {
@@ -257,9 +269,21 @@ class SnappingManager {
                         if box == nil {
                             box = FootprintWindow()
                         }
-                        box?.setFrame(.zero, display: false)
-                        box?.makeKeyAndOrderFront(nil)
-                        box?.setFrame(newBoxRect, display: true)
+                        if Defaults.footprintAnimationDurationMultiplier.value > 0 {
+                            if !box!.isVisible, let origin = getFootprintAnimationOrigin(snapArea, newBoxRect) {
+                                let frame = CGRect(origin: origin, size: .zero)
+                                box!.setFrame(frame, display: false)
+                            }
+                        } else {
+                            box!.setFrame(newBoxRect, display: true)
+                        }
+                        box!.makeKeyAndOrderFront(nil)
+                        if Defaults.footprintAnimationDurationMultiplier.value > 0 {
+                            NSAnimationContext.runAnimationGroup { changes in
+                                changes.duration = getFootprintAnimationDuration(box!, newBoxRect)
+                                box!.animator().setFrame(newBoxRect, display: true)
+                            }
+                        }
                     }
                     
                     currentSnapArea = snapArea
@@ -282,11 +306,38 @@ class SnappingManager {
                 lastRect == initialWindowRect,
                 let restoreRect = AppDelegate.windowHistory.restoreRects[windowId] {
                 
-                windowElement?.set(size: restoreRect.size)
+                windowElement?.size = restoreRect.size
                 AppDelegate.windowHistory.lastRectangleActions.removeValue(forKey: windowId)
             } else {
                 AppDelegate.windowHistory.restoreRects[windowId] = initialWindowRect
             }
+        }
+    }
+    
+    func getFootprintAnimationDuration(_ box: FootprintWindow, _ boxRect: CGRect) -> Double {
+        return box.animationResizeTime(boxRect) * Double(Defaults.footprintAnimationDurationMultiplier.value)
+    }
+    
+    func getFootprintAnimationOrigin(_ snapArea: SnapArea, _ boxRect: CGRect) -> CGPoint? {
+        switch snapArea.directional {
+        case .tl:
+            return CGPoint(x: boxRect.minX, y: boxRect.maxY)
+        case .t:
+            return CGPoint(x: boxRect.midX, y: boxRect.maxY)
+        case .tr:
+            return CGPoint(x: boxRect.maxX, y: boxRect.maxY)
+        case .l:
+            return CGPoint(x: boxRect.minX, y: boxRect.midY)
+        case .r:
+            return CGPoint(x: boxRect.maxX, y: boxRect.midY)
+        case .bl:
+            return CGPoint(x: boxRect.minX, y: boxRect.minY)
+        case .b:
+            return CGPoint(x: boxRect.midX, y: boxRect.minY)
+        case .br:
+            return CGPoint(x: boxRect.maxX, y: boxRect.minY)
+        default:
+            return nil
         }
     }
     
@@ -321,10 +372,10 @@ class SnappingManager {
             : SnapAreaModel.instance.portrait[directional]
             
             if let action = config?.action {
-                return SnapArea(screen: screen, action: action)
+                return SnapArea(screen: screen, directional: directional, action: action)
             }
             if let compound = config?.compound {
-                return compound.calculation.snapArea(cursorLocation: loc, screen: screen, priorSnapArea: priorSnapArea)
+                return compound.calculation.snapArea(cursorLocation: loc, screen: screen, directional: directional, priorSnapArea: priorSnapArea)
             }
         }
         
