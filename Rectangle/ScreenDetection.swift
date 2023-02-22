@@ -109,14 +109,12 @@ struct UsableScreens {
     let currentScreen: NSScreen
     let adjacentScreens: AdjacentScreens?
     let frameOfCurrentScreen: CGRect
-    var visibleFrameOfCurrentScreen: CGRect
     let numScreens: Int
     
     init(currentScreen: NSScreen, adjacentScreens: AdjacentScreens? = nil, numScreens: Int) {
         self.currentScreen = currentScreen
         self.adjacentScreens = adjacentScreens
         self.frameOfCurrentScreen = currentScreen.frame
-        self.visibleFrameOfCurrentScreen = currentScreen.adjustedVisibleFrame
         self.numScreens = numScreens
     }
 }
@@ -127,42 +125,41 @@ struct AdjacentScreens {
 }
 
 extension NSScreen {
-    var adjustedVisibleFrame: CGRect {
-        get {
-            var newFrame = visibleFrame
-            
-            if Defaults.stageSize.value > 0 {
-                if StageUtil.stageCapable && StageUtil.stageEnabled && StageUtil.stageStripShow && StageUtil.getStageStripWindowGroups().count > 0 {
-                    let stageSize = Defaults.stageSize.value < 1
-                        ? newFrame.size.width * Defaults.stageSize.cgFloat
-                        : Defaults.stageSize.cgFloat
-                    
-                    if StageUtil.stageStripPosition == .left {
-                        newFrame.origin.x += stageSize
-                    }
-                    newFrame.size.width -= stageSize 
-                }
-            }
 
-            if Defaults.todo.userEnabled, Defaults.todoMode.enabled, TodoManager.todoScreen == self {
-                newFrame.size.width -= Defaults.todoSidebarWidth.cgFloat
+    func adjustedVisibleFrame(_ ignoreTodo: Bool = false, _ ignoreStage: Bool = false) -> CGRect {
+        var newFrame = visibleFrame
+        
+        if !ignoreStage && Defaults.stageSize.value > 0 {
+            if StageUtil.stageCapable && StageUtil.stageEnabled && StageUtil.stageStripShow && StageUtil.getStageStripWindowGroups().count > 0 {
+                let stageSize = Defaults.stageSize.value < 1
+                    ? newFrame.size.width * Defaults.stageSize.cgFloat
+                    : Defaults.stageSize.cgFloat
+                
+                if StageUtil.stageStripPosition == .left {
+                    newFrame.origin.x += stageSize
+                }
+                newFrame.size.width -= stageSize
             }
-            
-            if Defaults.screenEdgeGapsOnMainScreenOnly.enabled, self != NSScreen.screens.first {
-                return newFrame
+        }
+        
+        if !ignoreTodo, Defaults.todo.userEnabled, Defaults.todoMode.enabled, TodoManager.todoScreen == self {
+            if Defaults.todoSidebarSide.value == .left {
+                newFrame.origin.x += Defaults.todoSidebarWidth.cgFloat
             }
-            
-            newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
-            newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
-            newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
-            newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
-                        
+            newFrame.size.width -= Defaults.todoSidebarWidth.cgFloat
+        }
+
+        if Defaults.screenEdgeGapsOnMainScreenOnly.enabled, self != NSScreen.screens.first {
             return newFrame
         }
-    }
-}
 
-extension NSRect {
-    var isLandscape: Bool { width > height }
+        newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
+        newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
+        newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
+        newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+
+        return newFrame
+    }
+
 }
 

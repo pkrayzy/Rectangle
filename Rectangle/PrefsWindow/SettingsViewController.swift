@@ -25,6 +25,8 @@ class SettingsViewController: NSViewController {
     @IBOutlet weak var cursorAcrossCheckbox: NSButton!
     @IBOutlet weak var todoCheckbox: NSButton!
     @IBOutlet weak var todoAppWidthField: AutoSaveFloatField!
+    @IBOutlet weak var todoAppSidePopUpButton: NSPopUpButton!
+    @IBOutlet weak var toggleTodoShortcutView: MASShortcutView!
     @IBOutlet weak var reflowTodoShortcutView: MASShortcutView!
     @IBOutlet weak var stageView: NSStackView!
     @IBOutlet weak var stageSlider: NSSlider!
@@ -34,10 +36,14 @@ class SettingsViewController: NSViewController {
     
     @IBAction func toggleLaunchOnLogin(_ sender: NSButton) {
         let newSetting: Bool = sender.state == .on
-        let smLoginSuccess = SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, newSetting)
-        if !smLoginSuccess {
-            Logger.log("Unable to set launch at login preference. Attempting one more time.")
-            SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, newSetting)
+        if #available(macOS 13, *) {
+            LaunchOnLogin.isEnabled = newSetting
+        } else {
+            let smLoginSuccess = SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, newSetting)
+            if !smLoginSuccess {
+                Logger.log("Unable to set launch at login preference. Attempting one more time.")
+                SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, newSetting)
+            }            
         }
         Defaults.launchOnLogin.enabled = newSetting
     }
@@ -96,6 +102,19 @@ class SettingsViewController: NSViewController {
         }
         NSApp.activate(ignoringOtherApps: true)
         aboutTodoWindowController?.showWindow(self)
+    }
+    
+    @IBAction func setTodoAppSide(_ sender: NSPopUpButton) {
+        let tag = sender.selectedTag()
+        guard let side = TodoSidebarSide(rawValue: tag) else {
+            Logger.log("Expected a pop up button to have a selected item with a valid tag matching a value of TodoSidebarSide. Got: \(String(describing: tag))")
+            return
+        }
+
+        Defaults.todoSidebarSide.value = side
+        
+        guard Defaults.todo.userEnabled && Defaults.todoMode.enabled else { return }
+        TodoManager.moveAll(false)
     }
     
     @IBAction func stageSliderChanged(_ sender: NSSlider) {
@@ -174,6 +193,10 @@ class SettingsViewController: NSViewController {
             self.initializeTodoModeSettings()
             self.initializeToggles()
         })
+        
+        Notification.Name.menuBarIconHidden.onPost(using: {_ in
+            self.hideMenuBarIconCheckbox.state = .on
+        })
     }
     
     func initializeTodoModeSettings() {
@@ -181,7 +204,13 @@ class SettingsViewController: NSViewController {
         todoAppWidthField.stringValue = String(Defaults.todoSidebarWidth.value)
         todoAppWidthField.delegate = self
         todoAppWidthField.defaults = Defaults.todoSidebarWidth
-        reflowTodoShortcutView.setAssociatedUserDefaultsKey(TodoManager.defaultsKey, withTransformerName: MASDictionaryTransformerName)
+        todoAppWidthField.defaultsSetAction = {
+            guard Defaults.todo.userEnabled && Defaults.todoMode.enabled else { return }
+            TodoManager.moveAll(false)
+        }
+        todoAppSidePopUpButton.selectItem(withTag: Defaults.todoSidebarSide.value.rawValue)
+        toggleTodoShortcutView.setAssociatedUserDefaultsKey(TodoManager.toggleDefaultsKey, withTransformerName: MASDictionaryTransformerName)
+        reflowTodoShortcutView.setAssociatedUserDefaultsKey(TodoManager.reflowDefaultsKey, withTransformerName: MASDictionaryTransformerName)
     }
     
     func initializeToggles() {
@@ -230,10 +259,12 @@ extension SettingsViewController: NSTextFieldDelegate {
         
         Debounce<Float>.input(sender.floatValue, comparedAgainst: sender.floatValue) { floatValue in
             defaults.value = floatValue
+            sender.defaultsSetAction?()
         }
     }
 }
 
 class AutoSaveFloatField: NSTextField {
     var defaults: FloatDefault?
+    var defaultsSetAction: (() -> Void)?
 }

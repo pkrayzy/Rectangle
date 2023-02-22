@@ -45,6 +45,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if intLastVersion < 64 {
                 SnapAreaModel.instance.migrate()
             }
+            if intLastVersion < 72 {
+                if #available(macOS 13, *) {
+                    SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, false)
+                }
+            }
         }
         
         Defaults.lastVersion.value = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
@@ -80,14 +85,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.applicationToggle.reloadFromDefaults()
             self.shortcutManager.reloadFromDefaults()
             self.snappingManager.reloadFromDefaults()
-            self.initializeTodo()
+            self.initializeTodo(false)
         })
         
         Notification.Name.todoMenuToggled.onPost(using: { _ in
-            self.showHideTodoMenuItems()
-            if Defaults.todo.userEnabled {
-                TodoManager.registerReflowShortcut()
-            }
+            self.initializeTodo(false)
         })
     }
     
@@ -236,24 +238,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func checkLaunchOnLogin() {
-        let running = NSWorkspace.shared.runningApplications
-        let isRunning = !running.filter({$0.bundleIdentifier == AppDelegate.launcherAppId}).isEmpty
-        if isRunning {
-            let killNotification = Notification.Name("killLauncher")
-            DistributedNotificationCenter.default().post(name: killNotification, object: Bundle.main.bundleIdentifier!)
-        }
-        if !Defaults.SUHasLaunchedBefore {
-            Defaults.launchOnLogin.enabled = true
-        }
-        
-        // Even if we are already set up to launch on login, setting it again since macOS can be buggy with this type of launch on login.
-        if Defaults.launchOnLogin.enabled {
-            let smLoginSuccess = SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, true)
-            if !smLoginSuccess {
-                if #available(OSX 10.12, *) {
-                    os_log("Unable to enable launch at login. Attempting one more time.", type: .info)
+        if #available(macOS 13.0, *) {
+            if Defaults.launchOnLogin.enabled, !LaunchOnLogin.isEnabled {
+                LaunchOnLogin.isEnabled = true
+            }
+        } else {
+            let running = NSWorkspace.shared.runningApplications
+            let isRunning = !running.filter({$0.bundleIdentifier == AppDelegate.launcherAppId}).isEmpty
+            if isRunning {
+                let killNotification = Notification.Name("killLauncher")
+                DistributedNotificationCenter.default().post(name: killNotification, object: Bundle.main.bundleIdentifier!)
+            }
+            if !Defaults.SUHasLaunchedBefore {
+                Defaults.launchOnLogin.enabled = true
+            }
+            
+            // Even if we are already set up to launch on login, setting it again since macOS can be buggy with this type of launch on login.
+            if Defaults.launchOnLogin.enabled {
+                let smLoginSuccess = SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, true)
+                if !smLoginSuccess {
+                    if #available(OSX 10.12, *) {
+                        os_log("Unable to enable launch at login. Attempting one more time.", type: .info)
+                    }
+                    SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, true)
                 }
-                SMLoginItemSetEnabled(AppDelegate.launcherAppId as CFString, true)
             }
         }
     }
@@ -388,12 +396,13 @@ extension AppDelegate: NSMenuDelegate {
 
 // todo mode
 extension AppDelegate {
-    func initializeTodo() {
+    func initializeTodo(_ bringToFront: Bool = true) {
         self.showHideTodoMenuItems()
         guard Defaults.todo.userEnabled else { return }
+        TodoManager.registerToggleShortcut()
         TodoManager.registerReflowShortcut()
         if Defaults.todoMode.enabled {
-            TodoManager.moveAll()
+            TodoManager.moveAll(bringToFront)
         }
     }
 
@@ -418,6 +427,7 @@ extension AppDelegate {
         let todoModeItemTitle = NSLocalizedString("Enable Todo Mode", tableName: "Main", value: "", comment: "")
         let todoModeMenuItem = NSMenuItem(title: todoModeItemTitle, action: #selector(toggleTodoMode), keyEquivalent: "")
         todoModeMenuItem.tag = TodoItem.mode.tag
+        todoModeMenuItem.target = self
         mainStatusMenu.insertItem(todoModeMenuItem, at: menuIndex)
         menuIndex += 1
 
@@ -459,6 +469,9 @@ extension AppDelegate {
 
     @objc func setTodoApp(_ sender: NSMenuItem) {
         applicationToggle.setTodoApp()
+        if Defaults.todoMode.enabled {
+            TodoManager.moveAll()
+        }
     }
 
     @objc func todoReflow(_ sender: NSMenuItem) {
@@ -486,12 +499,20 @@ extension AppDelegate {
         }
 
         todoModeMenuItem.state = Defaults.todoMode.enabled ? .on : .off
+        
+        if let fullKeyEquivalent = TodoManager.getToggleKeyDisplay(),
+            let keyEquivalent = fullKeyEquivalent.0?.lowercased() {
+            todoModeMenuItem.keyEquivalent = keyEquivalent
+            todoModeMenuItem.keyEquivalentModifierMask = fullKeyEquivalent.1
+        }
 
         if let fullKeyEquivalent = TodoManager.getReflowKeyDisplay(),
             let keyEquivalent = fullKeyEquivalent.0?.lowercased() {
             todoReflowMenuItem.keyEquivalent = keyEquivalent
             todoReflowMenuItem.keyEquivalentModifierMask = fullKeyEquivalent.1
         }
+        
+        todoReflowMenuItem.isEnabled = Defaults.todoMode.enabled
     }
 }
 

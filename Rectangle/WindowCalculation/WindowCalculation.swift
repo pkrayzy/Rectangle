@@ -29,7 +29,7 @@ class WindowCalculation: Calculation {
     }
 
     func calculateRect(_ params: RectCalculationParameters) -> RectResult {
-        return RectResult(CGRect.null)
+        RectResult(.null)
     }
     
     func rectCenteredWithinRect(_ rect1: CGRect, _ rect2: CGRect) -> Bool {
@@ -39,11 +39,7 @@ class WindowCalculation: Calculation {
     }
     
     func rectFitsWithinRect(rect1: CGRect, rect2: CGRect) -> Bool {
-        return (rect1.width <= rect2.width) && (rect1.height <= rect2.height)
-    }
-    
-    func isLandscape(_ rect: CGRect) -> Bool {
-        return rect.width > rect.height
+        (rect1.width <= rect2.width) && (rect1.height <= rect2.height)
     }
     
     func isRepeatedCommand(_ params: WindowCalculationParameters) -> Bool {
@@ -66,13 +62,21 @@ struct WindowCalculationParameters {
     let usableScreens: UsableScreens
     let action: WindowAction
     let lastAction: RectangleAction?
+    let ignoreTodo: Bool
     
     func asRectParams(visibleFrame: CGRect? = nil, differentAction: WindowAction? = nil) -> RectCalculationParameters {
-        RectCalculationParameters(window: window, visibleFrameOfScreen: visibleFrame ?? usableScreens.visibleFrameOfCurrentScreen, action: differentAction ?? action, lastAction: lastAction)
+        RectCalculationParameters(window: window,
+                                  visibleFrameOfScreen: visibleFrame ?? usableScreens.currentScreen.adjustedVisibleFrame(ignoreTodo),
+                                  action: differentAction ?? action,
+                                  lastAction: lastAction)
     }
     
     func withDifferentAction(_ differentAction: WindowAction) -> WindowCalculationParameters {
-        return WindowCalculationParameters(window: window, usableScreens: usableScreens, action: differentAction, lastAction: lastAction)
+        .init(window: window,
+              usableScreens: usableScreens,
+              action: differentAction,
+              lastAction: lastAction,
+              ignoreTodo: ignoreTodo)
     }
 }
 
@@ -100,12 +104,19 @@ struct WindowCalculationResult {
     let screen: NSScreen
     let resultingAction: WindowAction
     let resultingSubAction: SubWindowAction?
-    
-    init(rect: CGRect, screen: NSScreen, resultingAction: WindowAction,  resultingSubAction: SubWindowAction? = nil) {
+    let resultingScreenFrame: CGRect?
+
+    init(rect: CGRect,
+         screen: NSScreen,
+         resultingAction: WindowAction,
+         resultingSubAction: SubWindowAction? = nil,
+         resultingScreenFrame: CGRect? = nil) {
+        
         self.rect = rect
         self.screen = screen
         self.resultingAction = resultingAction
         self.resultingSubAction = resultingSubAction
+        self.resultingScreenFrame = resultingScreenFrame
     }
 }
 
@@ -168,6 +179,8 @@ class WindowCalculationFactory {
     static let bottomCenterRightEighthCalculation = BottomCenterRightEighthCalculation()
     static let bottomRightEighthCalculation = BottomRightEighthCalculation()
     static let specifiedCalculation = SpecifiedCalculation()
+    static let leftTodoCalculation = LeftTodoCalculation()
+    static let rightTodoCalculation = RightTodoCalculation()
 
     static let calculationsByAction: [WindowAction: WindowCalculation] = [
      .leftHalf: leftHalfCalculation,
@@ -229,7 +242,9 @@ class WindowCalculationFactory {
      .bottomCenterLeftEighth: bottomCenterLeftEighthCalculation,
      .bottomCenterRightEighth: bottomCenterRightEighthCalculation,
      .bottomRightEighth: bottomRightEighthCalculation,
-     .specified: specifiedCalculation
+     .specified: specifiedCalculation,
+     .leftTodo: leftTodoCalculation,
+     .rightTodo: rightTodoCalculation
         //     .restore: nil
     ]
 }
