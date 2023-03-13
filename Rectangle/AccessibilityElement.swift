@@ -59,6 +59,21 @@ class AccessibilityElement {
         return role == .sheet
     }
     
+    var isToolbar: Bool? {
+        guard let role = role else { return nil }
+        return role == .toolbar
+    }
+    
+    var isGroup: Bool? {
+        guard let role = role else { return nil }
+        return role == .group
+    }
+    
+    var isStaticText: Bool? {
+        guard let role = role else { return nil }
+        return role == .staticText
+    }
+    
     private var subrole: NSAccessibility.Subrole? {
         guard let value = wrappedElement.getValue(.subrole) as? String else { return nil }
         return NSAccessibility.Subrole(rawValue: value)
@@ -138,7 +153,15 @@ class AccessibilityElement {
         return childElements?.filter { $0.role == role }
     }
     
-    fileprivate var windowId: CGWindowID? {
+    func getChildElement(_ subrole: NSAccessibility.Subrole) -> AccessibilityElement? {
+        return childElements?.first { $0.subrole == subrole }
+    }
+    
+    func getChildElements(_ subrole: NSAccessibility.Subrole) -> [AccessibilityElement]? {
+        return childElements?.filter { $0.subrole == subrole }
+    }
+    
+    var windowId: CGWindowID? {
         wrappedElement.getWindowId()
     }
 
@@ -159,7 +182,7 @@ class AccessibilityElement {
         wrappedElement.getPid()
     }
     
-    private var windowElement: AccessibilityElement? {
+    var windowElement: AccessibilityElement? {
         if isWindow == true { return self }
         return getElementValue(.window)
     }
@@ -183,6 +206,21 @@ class AccessibilityElement {
         return subrole == .zoomButton
     }
     
+    var titleBarFrame: CGRect? {
+        guard
+            let windowElement,
+            case let windowFrame = windowElement.frame,
+            windowFrame != .null,
+            let closeButtonFrame = windowElement.getChildElement(.closeButton)?.frame,
+            closeButtonFrame != .null
+        else {
+            return nil
+        }
+        let gap = closeButtonFrame.minY - windowFrame.minY
+        let height = 2 * gap + closeButtonFrame.height
+        return CGRect(origin: windowFrame.origin, size: CGSize(width: windowFrame.width, height: height))
+    }
+    
     private var applicationElement: AccessibilityElement? {
         if isApplication == true { return self }
         guard let pid = pid else { return nil }
@@ -193,7 +231,7 @@ class AccessibilityElement {
         applicationElement?.getElementValue(.focusedWindow)
     }
     
-    private var windowElements: [AccessibilityElement]? {
+    var windowElements: [AccessibilityElement]? {
         applicationElement?.getElementsValue(.windows)
     }
     
@@ -292,11 +330,6 @@ extension AccessibilityElement {
         return nil
     }
     
-    static func getTodoWindowElement() -> AccessibilityElement? {
-        guard let bundleIdentifier = Defaults.todoApplication.value else { return nil }
-        return AccessibilityElement(bundleIdentifier)?.windowElements?.first
-    }
-    
     static func getWindowElement(_ windowId: CGWindowID) -> AccessibilityElement? {
         guard let pid = WindowUtil.getWindowList([windowId]).first?.pid else { return nil }
         return AccessibilityElement(pid).windowElements?.first { $0.windowId == windowId }
@@ -322,7 +355,7 @@ class StageWindowAccessibilityElement: AccessibilityElement {
         return .init(origin: info.frame.origin, size: frame.size)
     }
     
-    override fileprivate var windowId: CGWindowID? {
+    override var windowId: CGWindowID? {
         _windowId
     }
 }

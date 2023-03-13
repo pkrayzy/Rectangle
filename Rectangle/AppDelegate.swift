@@ -26,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var applicationToggle: ApplicationToggle!
     private var windowCalculationFactory: WindowCalculationFactory!
     private var snappingManager: SnappingManager!
+    private var titleBarManager: TitleBarManager!
     
     private var prefsWindowController: NSWindowController?
     
@@ -107,6 +108,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.shortcutManager = ShortcutManager(windowManager: windowManager)
         self.applicationToggle = ApplicationToggle(shortcutManager: shortcutManager)
         self.snappingManager = SnappingManager(applicationToggle: applicationToggle)
+        self.titleBarManager = TitleBarManager()
         self.initializeTodo()
         checkForProblematicApps()
     }
@@ -398,16 +400,13 @@ extension AppDelegate: NSMenuDelegate {
 extension AppDelegate {
     func initializeTodo(_ bringToFront: Bool = true) {
         self.showHideTodoMenuItems()
-        guard Defaults.todo.userEnabled else { return }
-        TodoManager.registerToggleShortcut()
-        TodoManager.registerReflowShortcut()
-        if Defaults.todoMode.enabled {
-            TodoManager.moveAll(bringToFront)
-        }
+        TodoManager.registerUnregisterToggleShortcut()
+        TodoManager.registerUnregisterReflowShortcut()
+        TodoManager.moveAllIfNeeded(bringToFront)
     }
 
     enum TodoItem {
-        case mode, app, reflow, separator
+        case mode, app, reflow, separator, window
 
         var tag: Int {
             switch self {
@@ -415,10 +414,11 @@ extension AppDelegate {
             case .app: return 102
             case .reflow: return 103
             case .separator: return 104
+            case .window: return 105
             }
         }
         
-        static let tags = [101, 102, 103, 104]
+        static let tags = [101, 102, 103, 104, 105]
     }
 
     private func addTodoModeMenuItems(startingIndex: Int) {
@@ -437,6 +437,12 @@ extension AppDelegate {
         mainStatusMenu.insertItem(todoAppMenuItem, at: menuIndex)
         menuIndex += 1
 
+        let todoWindowItemTitle = NSLocalizedString("Use as Todo Window", tableName: "Main", value: "", comment: "")
+        let todoWindowMenuItem = NSMenuItem(title: todoWindowItemTitle, action: #selector(setTodoWindow), keyEquivalent: "")
+        todoWindowMenuItem.tag = TodoItem.window.tag
+        mainStatusMenu.insertItem(todoWindowMenuItem, at: menuIndex)
+        menuIndex += 1
+        
         let todoReflowItemTitle = NSLocalizedString("Reflow Todo", tableName: "Main", value: "", comment: "")
         let todoReflowItem = NSMenuItem(title: todoReflowItemTitle, action: #selector(todoReflow), keyEquivalent: "")
         todoReflowItem.tag = TodoItem.reflow.tag
@@ -459,30 +465,30 @@ extension AppDelegate {
     }
 
     @objc func toggleTodoMode(_ sender: NSMenuItem) {
-        if sender.state == .off {
-            Defaults.todoMode.enabled = true
-            TodoManager.moveAll()
-        } else {
-            Defaults.todoMode.enabled = false
-        }
+        let enabled = sender.state == .off
+        TodoManager.setTodoMode(enabled)
     }
 
     @objc func setTodoApp(_ sender: NSMenuItem) {
         applicationToggle.setTodoApp()
-        if Defaults.todoMode.enabled {
-            TodoManager.moveAll()
-        }
+        TodoManager.moveAllIfNeeded()
     }
 
     @objc func todoReflow(_ sender: NSMenuItem) {
         TodoManager.moveAll()
+    }
+    
+    @objc func setTodoWindow(_ sender: NSMenuItem) {
+        TodoManager.resetTodoWindow()
+        TodoManager.moveAllIfNeeded()
     }
 
     private func updateTodoModeMenuItems(menu: NSMenu) {
         guard Defaults.todo.userEnabled,
               let todoAppMenuItem = menu.item(withTag: TodoItem.app.tag),
               let todoModeMenuItem = menu.item(withTag: TodoItem.mode.tag),
-              let todoReflowMenuItem = menu.item(withTag: TodoItem.reflow.tag)
+              let todoReflowMenuItem = menu.item(withTag: TodoItem.reflow.tag),
+              let todoWindowMenuItem = menu.item(withTag: TodoItem.window.tag)
         else {
             return
         }
@@ -513,6 +519,8 @@ extension AppDelegate {
         }
         
         todoReflowMenuItem.isEnabled = Defaults.todoMode.enabled
+        
+        todoWindowMenuItem.isHidden = !applicationToggle.todoAppIsActive() || TodoManager.isTodoWindowFront()
     }
 }
 

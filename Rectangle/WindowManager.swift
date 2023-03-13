@@ -91,7 +91,7 @@ class WindowManager {
             }
         }
         
-        let ignoreTodo = TodoManager.isTodoWindow(id: windowId)
+        let ignoreTodo = TodoManager.isTodoWindow(windowId)
         
         if frontmostWindowElement.isSheet == true
             || currentWindowRect.isNull
@@ -202,5 +202,5 @@ struct ExecutionParameters {
 }
 
 enum ExecutionSource {
-    case keyboardShortcut, dragToSnap, menuItem, url
+    case keyboardShortcut, dragToSnap, menuItem, url, titleBar
 }

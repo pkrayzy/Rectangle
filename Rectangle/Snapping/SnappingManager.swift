@@ -150,13 +150,14 @@ class SnappingManager {
         case .leftMouseUp:
             dragPrevY = nil
         case .leftMouseDragged:
-            if let cgEvent = event.cgEvent {
-                if cgEvent.location.y == 0 && dragPrevY == 0 {
+            if let cgEvent = event.cgEvent, let screen = NSScreen.main {
+                let minY = screen.frame.screenFlipped.minY
+                if cgEvent.location.y == minY && dragPrevY == minY {
                     if event.deltaY < -Defaults.missionControlDraggingAllowedOffscreenDistance.cgFloat {
-                        cgEvent.location.y = 1
+                        cgEvent.location.y = minY + 1
                         dragRestrictionExpirationTimestamp = DispatchTime.now().uptimeMilliseconds + UInt64(Defaults.missionControlDraggingDisallowedDuration.value)
                     } else if !dragRestrictionExpired {
-                        cgEvent.location.y = 1
+                        cgEvent.location.y = minY + 1
                     }
                 }
                 dragPrevY = cgEvent.location.y
@@ -191,7 +192,7 @@ class SnappingManager {
             }
         case .leftMouseUp:
             if let currentSnapArea = self.currentSnapArea {
-                box?.close()
+                box?.orderOut(nil)
                 currentSnapArea.action.postSnap(windowElement: windowElement, windowId: windowId, screen: currentSnapArea.screen)
                 self.currentSnapArea = nil
             } else {
@@ -206,7 +207,7 @@ class SnappingManager {
                     unsnapRestore(windowId: windowId)
                     
                     if let snapArea = snapAreaContainingCursor(priorSnapArea: currentSnapArea)  {
-                        box?.close()
+                        box?.orderOut(nil)
                         if canSnap(event) {
                             snapArea.action.postSnap(windowElement: windowElement, windowId: windowId, screen: snapArea.screen)
                         }
@@ -253,7 +254,7 @@ class SnappingManager {
             if windowMoving {
                 if !canSnap(event) {
                     if currentSnapArea != nil {
-                        box?.close()
+                        box?.orderOut(nil)
                         currentSnapArea = nil
                     }
                     return
@@ -270,14 +271,14 @@ class SnappingManager {
                             box = FootprintWindow()
                         }
                         if Defaults.footprintAnimationDurationMultiplier.value > 0 {
-                            if !box!.isVisible, let origin = getFootprintAnimationOrigin(snapArea, newBoxRect) {
+                            if !box!.realIsVisible, let origin = getFootprintAnimationOrigin(snapArea, newBoxRect) {
                                 let frame = CGRect(origin: origin, size: .zero)
                                 box!.setFrame(frame, display: false)
                             }
                         } else {
                             box!.setFrame(newBoxRect, display: true)
                         }
-                        box!.makeKeyAndOrderFront(nil)
+                        box!.orderFront(nil)
                         if Defaults.footprintAnimationDurationMultiplier.value > 0 {
                             NSAnimationContext.runAnimationGroup { changes in
                                 changes.duration = getFootprintAnimationDuration(box!, newBoxRect)
@@ -289,7 +290,7 @@ class SnappingManager {
                     currentSnapArea = snapArea
                 } else {
                     if currentSnapArea != nil {
-                        box?.close()
+                        box?.orderOut(nil)
                         currentSnapArea = nil
                     }
                 }
@@ -344,7 +345,7 @@ class SnappingManager {
     func getBoxRect(hotSpot: SnapArea, currentWindow: Window) -> CGRect? {
         if let calculation = WindowCalculationFactory.calculationsByAction[hotSpot.action] {
             
-            let ignoreTodo = TodoManager.isTodoWindow(id: currentWindow.id)
+            let ignoreTodo = TodoManager.isTodoWindow(currentWindow.id)
             let rectCalcParams = RectCalculationParameters(window: currentWindow, visibleFrameOfScreen: hotSpot.screen.adjustedVisibleFrame(ignoreTodo), action: hotSpot.action, lastAction: nil)
             let rectResult = calculation.calculateRect(rectCalcParams)
             
@@ -368,7 +369,7 @@ class SnappingManager {
             guard let directional = directionalLocationOfCursor(loc: loc, screen: screen)
             else { continue }
             
-            if let windowId = windowId, Defaults.todo.userEnabled && Defaults.todoMode.enabled && TodoManager.isTodoWindow(id: windowId) {
+            if let windowId = windowId, Defaults.todo.userEnabled && Defaults.todoMode.enabled && TodoManager.isTodoWindow(windowId) {
                 if Defaults.todoSidebarSide.value == .left && directional == .l {
                     return SnapArea(screen: screen, directional: directional, action: .leftTodo)
                 }

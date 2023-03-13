@@ -23,7 +23,9 @@ class SettingsViewController: NSViewController {
     @IBOutlet weak var gapSlider: NSSlider!
     @IBOutlet weak var gapLabel: NSTextField!
     @IBOutlet weak var cursorAcrossCheckbox: NSButton!
+    @IBOutlet weak var doubleClickTitleBarCheckbox: NSButton!
     @IBOutlet weak var todoCheckbox: NSButton!
+    @IBOutlet weak var todoView: NSStackView!
     @IBOutlet weak var todoAppWidthField: AutoSaveFloatField!
     @IBOutlet weak var todoAppSidePopUpButton: NSPopUpButton!
     @IBOutlet weak var toggleTodoShortcutView: MASShortcutView!
@@ -90,9 +92,38 @@ class SettingsViewController: NSViewController {
         AppDelegate.updaterController.checkForUpdates(sender)
     }
     
+    @IBAction func toggleDoubleClickTitleBar(_ sender: NSButton) {
+        let newSetting: Bool = sender.state == .on
+        if newSetting && !TitleBarManager.systemSettingDisabled {
+            
+            var openSystemSettingsButtonName = NSLocalizedString("iWV-c2-BJD.title", tableName: "Main", value: "Open System Preferences", comment: "")
+            
+            if #available(macOS 13, *) {
+                openSystemSettingsButtonName = NSLocalizedString(
+                    "Open System Settings", tableName: "Main", value: "", comment: "")
+            }
+
+            let conflictTitleText = NSLocalizedString(
+                "Conflict with system setting", tableName: "Main", value: "", comment: "")
+            let conflictDescriptionText = NSLocalizedString(
+                "To let Rectangle manage the title bar double click functionality, you need to disable the corresponding macOS setting.", tableName: "Main", value: "", comment: "")
+
+            
+            let closeText = NSLocalizedString("DVo-aG-piG.title", tableName: "Main", value: "Close", comment: "")
+            
+            let response = AlertUtil.twoButtonAlert(question: conflictTitleText, text: conflictDescriptionText, confirmText: openSystemSettingsButtonName, cancelText: closeText)
+            if response == .alertFirstButtonReturn {
+                NSWorkspace.shared.open(URL(string:"x-apple.systempreferences:com.apple.preference.dock")!)
+            }
+        }
+        Defaults.doubleClickTitleBar.value = (newSetting ? WindowAction.maximize.rawValue : -1) + 1
+        Notification.Name.windowTitleBar.post()
+    }
+    
     @IBAction func toggleTodoMode(_ sender: NSButton) {
         let newSetting: Bool = sender.state == .on
         Defaults.todo.enabled = newSetting
+        showHideTodoModeSettings()
         Notification.Name.todoMenuToggled.post()
     }
     
@@ -113,8 +144,7 @@ class SettingsViewController: NSViewController {
 
         Defaults.todoSidebarSide.value = side
         
-        guard Defaults.todo.userEnabled && Defaults.todoMode.enabled else { return }
-        TodoManager.moveAll(false)
+        TodoManager.moveAllIfNeeded(false)
     }
     
     @IBAction func stageSliderChanged(_ sender: NSSlider) {
@@ -205,12 +235,18 @@ class SettingsViewController: NSViewController {
         todoAppWidthField.delegate = self
         todoAppWidthField.defaults = Defaults.todoSidebarWidth
         todoAppWidthField.defaultsSetAction = {
-            guard Defaults.todo.userEnabled && Defaults.todoMode.enabled else { return }
-            TodoManager.moveAll(false)
+            TodoManager.moveAllIfNeeded(false)
         }
         todoAppSidePopUpButton.selectItem(withTag: Defaults.todoSidebarSide.value.rawValue)
+        TodoManager.initToggleShortcut()
+        TodoManager.initReflowShortcut()
         toggleTodoShortcutView.setAssociatedUserDefaultsKey(TodoManager.toggleDefaultsKey, withTransformerName: MASDictionaryTransformerName)
         reflowTodoShortcutView.setAssociatedUserDefaultsKey(TodoManager.reflowDefaultsKey, withTransformerName: MASDictionaryTransformerName)
+        showHideTodoModeSettings()
+    }
+    
+    private func showHideTodoModeSettings() {
+        todoView.isHidden = !Defaults.todo.userEnabled
     }
     
     func initializeToggles() {
@@ -229,6 +265,8 @@ class SettingsViewController: NSViewController {
         gapSlider.isContinuous = true
         
         cursorAcrossCheckbox.state = Defaults.moveCursorAcrossDisplays.userEnabled ? .on : .off
+        
+        doubleClickTitleBarCheckbox.state = WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1) != nil ? .on : .off
 
         if StageUtil.stageCapable {
             stageSlider.intValue = Int32(Defaults.stageSize.value)
