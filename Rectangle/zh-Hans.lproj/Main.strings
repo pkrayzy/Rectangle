@@ -191,7 +191,7 @@
 "cBj-76-2E7.title" = "未获授权控制您的电脑";
 
 /* Class = "NSTextFieldCell"; title = "Last Third"; ObjectID = "cRm-wn-Yv6"; */
-"cRm-wn-Yv6.title" = "右首三分之一";
+"cRm-wn-Yv6.title" = "右首１／３";
 
 /* Class = "NSTextFieldCell"; title = "Top Half"; ObjectID = "d7y-s8-7GE"; */
 "d7y-s8-7GE.title" = "上半屏";
@@ -265,8 +265,8 @@
 /* Class = "NSTextFieldCell"; title = "Enable Rectangle.app"; ObjectID = "t7n-mU-75I"; */
 "t7n-mU-75I.title" = "启用 Rectangle.app";
 
-/* Class = "NSButtonCell"; title = "Restore Default Shortcuts"; ObjectID = "uLF-Uf-tBt"; */
-"uLF-Uf-tBt.title" = "恢复默认快捷键";
+/* Class = "NSButtonCell"; title = "Restore Default Shortcuts & Snap Areas"; ObjectID = "uLF-Uf-tBt"; */
+"uLF-Uf-tBt.title" = "恢复默认快捷键和吸附区域";
 
 /* Class = "NSMenu"; title = "Rectangle"; ObjectID = "uQy-DD-JDr"; */
 "uQy-DD-JDr.title" = "Rectangle";
