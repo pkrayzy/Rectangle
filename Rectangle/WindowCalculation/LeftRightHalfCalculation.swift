@@ -57,8 +57,10 @@ class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCal
         rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction))
         rect.size.height = round(visibleFrameOfScreen.height * almostMaximizeHeight)
         rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
+        rect.origin.x = round(visibleFrameOfScreen.width * 0.0125)
         if params.action == .rightHalf {
-            rect.origin.x = visibleFrameOfScreen.maxX - rect.width
+            // rect.origin.x = visibleFrameOfScreen.maxX - rect.width
+            rect.origin.x = round(visibleFrameOfScreen.width * 0.9875) - rect.width
         }
         
         return RectResult(rect)
