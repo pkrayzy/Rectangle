@@ -12,10 +12,11 @@ class LastFourthCalculation: WindowCalculation, OrientationAware {
     
     override func calculateRect(_ params: RectCalculationParameters) -> RectResult {
         let visibleFrameOfScreen = params.visibleFrameOfScreen
-
+        
         guard Defaults.subsequentExecutionMode.value != .none,
-            let last = params.lastAction, 
-            let lastSubAction = last.subAction 
+              params.action == .lastFourth,
+              let last = params.lastAction,
+              let lastSubAction = last.subAction 
         else {
             return orientationBasedRect(visibleFrameOfScreen)
         }
@@ -40,21 +41,22 @@ class LastFourthCalculation: WindowCalculation, OrientationAware {
                 break
             }
         }
-
+        
         if let calculation = calculation {
             return calculation.calculateRect(params)
         }
         
         return orientationBasedRect(visibleFrameOfScreen)
     }
-
+    
     func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
+        
         rect.size.height = floor(visibleFrameOfScreen.height * 0.95)
         rect.origin.y = round(visibleFrameOfScreen.height * 0.025)
-
+        
         rect.size.width = floor(visibleFrameOfScreen.width / 4.0)
-        rect.origin.x = round(visibleFrameOfScreen.width * 0.7275)
+        rect.origin.x = round(visibleFrameOfScreen.width * 0.73755)
         
         return RectResult(rect, subAction: .rightFourth)
     }
@@ -65,4 +67,5 @@ class LastFourthCalculation: WindowCalculation, OrientationAware {
         rect.origin.y = visibleFrameOfScreen.origin.y + visibleFrameOfScreen.height - (rect.height * 3)
         return RectResult(rect, subAction: .bottomFourth)
     }
+    
 }
