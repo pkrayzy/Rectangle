@@ -51,7 +51,7 @@ class LastFourthCalculation: WindowCalculation, OrientationAware {
         rect.origin.y = round(visibleFrameOfScreen.height * 0.025)
 
         rect.size.width = floor(visibleFrameOfScreen.width / 4.0)
-        rect.origin.x = round(visibleFrameOfScreen.width * 0.0125)
+        rect.origin.x = round(visibleFrameOfScreen.width * 0.7275)
         
         return RectResult(rect, subAction: .rightFourth)
     }
