@@ -41,8 +41,13 @@ class SecondFourthCalculation: WindowCalculation, OrientationAware {
         
     func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
+
+        rect.size.height = floor(visibleFrameOfScreen.height * 0.975)
+        rect.origin.y = round(visibleFrameOfScreen.height * 0.0125)
+
         rect.size.width = floor(visibleFrameOfScreen.width / 4.0)
         rect.origin.x = visibleFrameOfScreen.minX + rect.width
+        
         return RectResult(rect, subAction: .centerLeftFourth)
     }
     
