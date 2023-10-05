@@ -297,19 +297,24 @@ extension AccessibilityElement {
     }
     
     private static func getWindowInfo(_ location: CGPoint) -> WindowInfo? {
-        let infos = WindowUtil.getWindowList().filter { !["Dock", "WindowManager"].contains($0.processName) }
-        if let info = (infos.first { $0.frame.contains(location) }) {
-            return info
-        }
-        Logger.log("Unable to obtain window info from location")
-        return nil
+        WindowUtil.getWindowList().first(where: {windowInfo in
+            windowInfo.level < 23 // 23 is the level of the Notification Center
+            && !["Dock", "WindowManager"].contains(windowInfo.processName)
+            && windowInfo.frame.contains(location)
+        })
     }
 
     static func getWindowElementUnderCursor() -> AccessibilityElement? {
         let position = NSEvent.mouseLocation.screenFlipped
-        if let element = AccessibilityElement(position), let windowElement = element.windowElement {
-            return windowElement
+
+        let systemWideFirst = Defaults.systemWideMouseDown.userEnabled
+        
+        if systemWideFirst,
+            let element = AccessibilityElement(position),
+            let windowElement = element.windowElement {
+                return windowElement
         }
+
         if let info = getWindowInfo(position) {
             if !Defaults.dragFromStage.userDisabled {
                 if StageUtil.stageCapable && StageUtil.stageEnabled,
@@ -322,20 +327,23 @@ extension AccessibilityElement {
             }
             if let windowElements = AccessibilityElement(info.pid).windowElements {
                 if let windowElement = (windowElements.first { $0.windowId == info.id }) {
-                    if Logger.logging {
-                        let appName = NSRunningApplication(processIdentifier: info.pid)?.localizedName ?? ""
-                        Logger.log("Window under cursor fallback matched: \(appName) \(info)")
-                    }
                     return windowElement
                 }
                 if let windowElement = (windowElements.first { $0.frame == info.frame }) {
-                    if Logger.logging {
-                        let appName = NSRunningApplication(processIdentifier: info.pid)?.localizedName ?? ""
-                        Logger.log("Window under cursor fallback matched: \(appName) \(info)")
-                    }
                     return windowElement
                 }
             }
+        }
+        
+        if !systemWideFirst,
+           let element = AccessibilityElement(position),
+           let windowElement = element.windowElement {
+            
+            if Logger.logging, let pid = windowElement.pid {
+                let appName = NSRunningApplication(processIdentifier: pid)?.localizedName ?? ""
+                Logger.log("Window under cursor fallback matched: \(appName)")
+            }
+            return windowElement
         }
         Logger.log("Unable to obtain the accessibility element with the specified attribute at mouse location")
         return nil
