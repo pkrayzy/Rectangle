@@ -36,7 +36,7 @@ class TitleBarManager {
             TitleBarManager.systemSettingDisabled,
             let action = WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1),
             case let location = NSEvent.mouseLocation.screenFlipped,
-            let element = AccessibilityElement(location),
+            let element = AccessibilityElement(location)?.getSelfOrChildElementRecursively(location),
             let windowElement = element.windowElement,
             var titleBarFrame = windowElement.titleBarFrame
         else {
@@ -49,6 +49,13 @@ class TitleBarManager {
             titleBarFrame.contains(location),
             element.isWindow == true || element.isToolbar == true || element.isGroup == true || element.isStaticText == true
         else {
+            return
+        }
+        if let ignoredApps = Defaults.doubleClickTitleBarIgnoredApps.typedValue,
+            !ignoredApps.isEmpty,
+            let pid = element.pid,
+            let appId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier,
+            ignoredApps.contains(appId) {
             return
         }
         if Defaults.doubleClickTitleBarRestore.enabled != false,

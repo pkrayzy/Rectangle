@@ -103,7 +103,7 @@ defaults write com.knollsoft.Rectangle todo -int 1
 
 ## Only allow drag-to-snap when modifier keys are pressed
 
-Modifier key values can be ORed together.
+Modifier keys can be combined by adding the sum of Integer Values together.
 
 | Modifier Key | Integer Value |
 |--------------|---------------|
@@ -233,7 +233,7 @@ The key codes are:
 
 _tileAll_ and _cascadeAll_ act on all visible windows.
 
-_cascadeActiveApp_ cascades and brings to the front only windows belonging too the currently active (foremost) app, leaving all other windows alone.
+_cascadeActiveApp_ cascades and brings to the front only windows belonging to the currently active (foremost) app, leaving all other windows alone.
 
 For example, the command for setting the cascadeActiveApp shortcut to `ctrl shift 2` would be:
 
@@ -444,4 +444,10 @@ To disable restore when double-clicked again:
 
 ```bash
 defaults write com.knollsoft.Rectangle doubleClickTitleBarRestore -int 2
+```
+
+To disable double-click window title bar only for specific bundle ids (in example, Outlook):
+
+```bash
+defaults write com.knollsoft.Rectangle doubleClickTitleBarIgnoredApps -string "[\"com.microsoft.Outlook\"]"
 ```
