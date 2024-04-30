@@ -42,7 +42,7 @@ Drag a window to the edge of the screen. When the mouse cursor reaches the edge 
 
 ## Execute an action by URL
 
-Open the URL `rectangle://execute-action?name=[name]`. Do not activate Rectangle.
+Open the URL `rectangle://execute-action?name=[name]`. Do not activate Rectangle if possible.
 
 Available values for `[name]`: `left-half`, `right-half`, `center-half`, `top-half`, `bottom-half`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `first-third`, `center-third`, `last-third`, `first-two-thirds`, `last-two-thirds`, `maximize`, `almost-maximize`, `maximize-height`, `smaller`, `larger`, `center`, `restore`, `next-display`, `previous-display`, `move-left`, `move-right`, `move-up`, `move-down`, `first-fourth`, `second-fourth`, `third-fourth`, `last-fourth`, `first-three-fourths`, `last-three-fourths`, `top-left-sixth`, `top-center-sixth`, `top-right-sixth`, `bottom-left-sixth`, `bottom-center-sixth`, `bottom-right-sixth`, `specified`, `reverse-all`, `top-left-ninth`, `top-center-ninth`, `top-right-ninth`, `middle-left-ninth`, `middle-center-ninth`, `middle-right-ninth`, `bottom-left-ninth`, `bottom-center-ninth`, `bottom-right-ninth`, `top-left-third`, `top-right-third`, `bottom-left-third`, `bottom-right-third`, `top-left-eighth`, `top-center-left-eighth`, `top-center-right-eighth`, `top-right-eighth`, `bottom-left-eighth`, `bottom-center-left-eighth`, `bottom-center-right-eighth`, `bottom-right-eighth`, `tile-all`, `cascade-all`
 
@@ -139,7 +139,7 @@ defaults delete com.knollsoft.Rectangle
 
 ## Contributing
 
-Logic from Rectangle is used in the [Multitouch](https://multitouch.app) app. The [Rectangle Pro](https://rectangleapp.com/pro) app is entirely built on top of Rectangle. If you contribute significant code or localizations that get merged into Rectangle, you get a free license of Multitouch or Rectangle Pro. Contributors to Sparkle, MASShortcut, or Spectacle can also receive free Multitouch or Rectangle Pro licenses (just send me a direct message on [Gitter](https://gitter.im)).
+Logic from Rectangle is used in the [Multitouch](https://multitouch.app) app. The [Rectangle Pro](https://rectangleapp.com/pro) app is entirely built on top of Rectangle. If you contribute significant code or localizations that get merged into Rectangle, send me an email for a free license of Multitouch or Rectangle Pro. Contributors to Sparkle, MASShortcut, or Spectacle can also receive free Multitouch or Rectangle Pro licenses.
 
 ### Localization
 
