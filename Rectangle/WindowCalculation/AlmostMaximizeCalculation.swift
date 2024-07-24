@@ -16,7 +16,7 @@ class AlmostMaximizeCalculation: WindowCalculation {
     override init() {
         let defaultHeight = Defaults.almostMaximizeHeight.value
         almostMaximizeHeight = (defaultHeight <= 0 || defaultHeight > 1)
-            ? 0.99
+            ? 0.985
             : CGFloat(defaultHeight)
 
         let defaultWidth = Defaults.almostMaximizeWidth.value
