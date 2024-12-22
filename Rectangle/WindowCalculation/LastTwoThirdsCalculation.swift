@@ -39,23 +39,3 @@ class LastTwoThirdsCalculation: WindowCalculation, OrientationAware {
     }
 }
 
-
-
-func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
-    var rect = visibleFrameOfScreen
-    
-    rect.size.height = floor(visibleFrameOfScreen.height * 0.985)
-    rect.origin.y = round(visibleFrameOfScreen.height * 0.0075)
-    
-    rect.size.width = floor(visibleFrameOfScreen.width * 2 / 3.0)
-    rect.origin.x = round(visibleFrameOfScreen.width * ((2 / 3.0) - 0.005))
-    
-    return RectResult(rect, subAction: .rightTwoThirds)
-}
-
-func portraitRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
-    var rect = visibleFrameOfScreen
-    rect.size.height = floor(visibleFrameOfScreen.height * 2 / 3.0)
-    rect.origin.y = visibleFrameOfScreen.origin.y + visibleFrameOfScreen.height - (rect.height * 3)
-    return RectResult(rect, subAction: .bottomTwoThirds)
-}

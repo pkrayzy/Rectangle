@@ -5,24 +5,10 @@
 //  Created by Ryan Hanson on 6/13/19.
 //  Copyright © 2019 Ryan Hanson. All rights reserved.
 //
+
 import Cocoa
 
 class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation {
-    
-    let almostMaximizeHeight: CGFloat
-    let almostMaximizeWidth: CGFloat
-
-    override init() {
-        let defaultHeight = Defaults.almostMaximizeHeight.value
-        almostMaximizeHeight = (defaultHeight <= 0 || defaultHeight > 1)
-            ? 0.985
-            : CGFloat(defaultHeight)
-
-        let defaultWidth = Defaults.almostMaximizeWidth.value
-        almostMaximizeWidth = (defaultWidth <= 0 || defaultWidth > 1)
-            ? 0.99
-            : CGFloat(defaultWidth)
-    }
     
     override func calculate(_ params: WindowCalculationParameters) -> WindowCalculationResult? {
         
@@ -54,13 +40,9 @@ class LeftRightHalfCalculation: WindowCalculation, RepeatedExecutionsInThirdsCal
 
         var rect = visibleFrameOfScreen
         
-        rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction) * 0.985)
-        rect.size.height = round(visibleFrameOfScreen.height * almostMaximizeHeight)
-        rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
-        rect.origin.x = round(visibleFrameOfScreen.width * 0.005)
+        rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction))
         if params.action == .rightHalf {
-            // rect.origin.x = visibleFrameOfScreen.maxX - rect.width
-            rect.origin.x = round(visibleFrameOfScreen.width * 0.995) - rect.width
+            rect.origin.x = visibleFrameOfScreen.maxX - rect.width
         }
         
         return RectResult(rect)

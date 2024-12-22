@@ -26,21 +26,16 @@ class FirstThreeFourthsCalculation: WindowCalculation, OrientationAware {
     
     func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
-        
-        rect.size.height = floor(visibleFrameOfScreen.height * 0.985)
-        rect.origin.y = round(visibleFrameOfScreen.height * 0.0075)
-
-        rect.size.width = floor(0.99 * visibleFrameOfScreen.width * 3 / 4.0)
-        rect.origin.x = round(visibleFrameOfScreen.width * 0.005)
-        
+        rect.size.width = floor(visibleFrameOfScreen.width * 3 / 4.0)
         return RectResult(rect, subAction: .leftThreeFourths)
     }
-
+    
     func portraitRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
-        rect.size.height = (0.985 * floor(visibleFrameOfScreen.height * 3 / 4.0))
+        rect.size.height = floor(visibleFrameOfScreen.height * 3 / 4.0)
         rect.origin.y = visibleFrameOfScreen.origin.y + visibleFrameOfScreen.height - rect.height
         return RectResult(rect, subAction: .topThreeFourths)
     }
-
+    
 }
+

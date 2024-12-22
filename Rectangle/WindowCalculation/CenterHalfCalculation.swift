@@ -31,8 +31,8 @@ class CenterHalfCalculation: WindowCalculation, OrientationAware, RepeatedExecut
         var rect = visibleFrameOfScreen
         
         // Resize
-        rect.size.height = (0.985 * visibleFrameOfScreen.height)
-        rect.size.width = round(0.99 * visibleFrameOfScreen.width * CGFloat(fraction))
+        rect.size.height = visibleFrameOfScreen.height
+        rect.size.width = round(visibleFrameOfScreen.width * CGFloat(fraction))
         
         // Center
         rect.origin.x = round((visibleFrameOfScreen.width - rect.width) / 2.0) + visibleFrameOfScreen.minX
@@ -45,11 +45,11 @@ class CenterHalfCalculation: WindowCalculation, OrientationAware, RepeatedExecut
         var rect = visibleFrameOfScreen
         
         // Resize
-        rect.size.width = round(0.99 * visibleFrameOfScreen.width)
-        rect.size.height = round(0.985 * visibleFrameOfScreen.height * CGFloat(fraction))
+        rect.size.width = visibleFrameOfScreen.width
+        rect.size.height = round(visibleFrameOfScreen.height * CGFloat(fraction))
         
         // Center
-        rect.origin.x = round((visibleFrameOfScreen.width * 0.99 - rect.width) / 2.0) + visibleFrameOfScreen.minX
+        rect.origin.x = round((visibleFrameOfScreen.width - rect.width) / 2.0) + visibleFrameOfScreen.minX
         rect.origin.y = round((visibleFrameOfScreen.height - rect.height) / 2.0) + visibleFrameOfScreen.minY
         
         return RectResult(rect, subAction: .centerHorizontalHalf)

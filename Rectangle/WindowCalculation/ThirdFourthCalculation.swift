@@ -13,7 +13,6 @@ class ThirdFourthCalculation: WindowCalculation, OrientationAware {
     override func calculateRect(_ params: RectCalculationParameters) -> RectResult {
 
         let visibleFrameOfScreen = params.visibleFrameOfScreen
-        
         guard Defaults.subsequentExecutionMode.value != .none,
             let last = params.lastAction,
             let lastSubAction = last.subAction,
@@ -41,13 +40,8 @@ class ThirdFourthCalculation: WindowCalculation, OrientationAware {
         
     func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
-        
-        rect.size.height = floor(visibleFrameOfScreen.height * 0.985)
-        rect.origin.y = round(visibleFrameOfScreen.height * 0.0075)
-        
         rect.size.width = floor(visibleFrameOfScreen.width / 4.0)
         rect.origin.x = visibleFrameOfScreen.minX + (rect.width * 2)
-        
         return RectResult(rect, subAction: .centerRightFourth)
     }
     
