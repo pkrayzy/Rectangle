@@ -22,4 +22,17 @@ extension CGRect {
     }
 
     var isLandscape: Bool { width > height }
+    
+    var centerPoint: CGPoint {
+        NSMakePoint(NSMidX(self), NSMidY(self))
+    }
+    
+    func numSharedEdges(withRect rect: CGRect) -> Int {
+        var sharedEdgeCount = 0
+        if minX == rect.minX { sharedEdgeCount += 1 }
+        if maxX == rect.maxX { sharedEdgeCount += 1 }
+        if minY == rect.minY { sharedEdgeCount += 1 }
+        if maxY == rect.maxY { sharedEdgeCount += 1 }
+        return sharedEdgeCount
+    }
 }
