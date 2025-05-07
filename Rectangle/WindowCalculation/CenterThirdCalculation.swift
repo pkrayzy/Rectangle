@@ -17,9 +17,9 @@ class CenterThirdCalculation: WindowCalculation, OrientationAware {
     
     func landscapeRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
-        rect.origin.x = visibleFrameOfScreen.minX + floor(visibleFrameOfScreen.width / 3.0)
+        rect.origin.x = visibleFrameOfScreen.minX + floor(visibleFrameOfScreen.width * 4 / 10.0)
         rect.origin.y = visibleFrameOfScreen.minY
-        rect.size.width = visibleFrameOfScreen.width / 3.0
+        rect.size.width = visibleFrameOfScreen.width * 4 / 10.0
         rect.size.height = visibleFrameOfScreen.height
         return RectResult(rect, subAction: .centerVerticalThird)
     }
@@ -27,9 +27,9 @@ class CenterThirdCalculation: WindowCalculation, OrientationAware {
     func portraitRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
         var rect = visibleFrameOfScreen
         rect.origin.x = visibleFrameOfScreen.minX
-        rect.origin.y = visibleFrameOfScreen.minY + floor(visibleFrameOfScreen.height / 3.0)
+        rect.origin.y = visibleFrameOfScreen.minY + floor(visibleFrameOfScreen.height * 4 / 10.0)
         rect.size.width = visibleFrameOfScreen.width
-        rect.size.height = visibleFrameOfScreen.height / 3.0
+        rect.size.height = visibleFrameOfScreen.height * 4 / 10.0
         return RectResult(rect, subAction: .centerHorizontalThird)
     }
 }

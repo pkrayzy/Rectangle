@@ -5,6 +5,8 @@ xcuserdata/
 **.xcuserstate
 *.xcworkspace
 Pods
+DerivedData
+DerivedData/
 
 ## Xcode per-user config
 *.mode1
@@ -20,6 +22,7 @@ Pods
 !*.xcodeproj/xcshareddata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
+
 
 ## Build products
 build/
