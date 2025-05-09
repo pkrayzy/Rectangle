@@ -66,15 +66,15 @@ extension CycleSize {
     var fraction: Float {
         switch self {
         case .twoThirds:
-            2 / 3
+            3 / 5
         case .oneHalf:
             1 / 2
         case .oneThird:
-            1 / 3
+            2 / 5
         case .oneQuarter:
-            1 / 4
+            3 / 10
         case .threeQuarters:
-            3 / 4
+            7 / 10
         }
     }
     
