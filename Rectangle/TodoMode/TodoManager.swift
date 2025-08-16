@@ -166,16 +166,19 @@ class TodoManager {
                 }
 
                 adjustedVisibleFrame = screen.adjustedVisibleFrame(true)
+                let sidebarWidth = getSidebarWidth(visibleFrameWidth: adjustedVisibleFrame.width)
+
                 var sharedEdge: Edge
                 var rect = adjustedVisibleFrame
-                switch Defaults.todoSidebarSide.value {
-                case .left:
-                    sharedEdge = .right
-                case .right:
-                    sharedEdge = .left
-                    rect.origin.x = adjustedVisibleFrame.maxX - Defaults.todoSidebarWidth.cgFloat
+                let isRightSide = Defaults.todoSidebarSide.value == .right
+
+                sharedEdge = isRightSide ? .left : .right
+
+                if isRightSide {
+                    rect.origin.x = adjustedVisibleFrame.maxX - sidebarWidth
                 }
-                rect.size.width = Defaults.todoSidebarWidth.cgFloat
+                rect.size.width = sidebarWidth
+
                 rect = rect.screenFlipped
                 
                 if Defaults.gapSize.value > 0 {
@@ -190,12 +193,30 @@ class TodoManager {
         }
     }
     
+    static func getSidebarWidth(visibleFrameWidth: CGFloat) -> CGFloat {
+        var sidebarWidth = Defaults.todoSidebarWidth.cgFloat
+        
+        if sidebarWidth > 0 && sidebarWidth <= 1 {
+            sidebarWidth = sidebarWidth * visibleFrameWidth
+        } else if Defaults.todoSidebarWidthUnit.value == .pct {
+            sidebarWidth = convert(width: sidebarWidth, toUnit: .pixels, visibleFrameWidth: visibleFrameWidth)
+        }
+        
+        return sidebarWidth
+    }
+    
+    static func convert(width: CGFloat, toUnit unit: TodoSidebarWidthUnit, visibleFrameWidth: CGFloat) -> CGFloat {
+        unit == .pixels
+        ? ((width * 0.01) * visibleFrameWidth).rounded()
+        : ((width / visibleFrameWidth) * 100).rounded()
+    }
+    
     static func moveAllIfNeeded(_ bringToFront: Bool = true) {
         guard Defaults.todo.userEnabled && Defaults.todoMode.enabled else { return }
         moveAll(bringToFront)
     }
     
-    private static func refreshTodoScreen() {
+    static func refreshTodoScreen() {
         let todoWindow = getTodoWindowElement()
         let screens = ScreenDetection().detectScreens(using: todoWindow)
         TodoManager.todoScreen = screens?.currentScreen
@@ -244,4 +265,18 @@ class TodoManager {
 enum TodoSidebarSide: Int {
     case right = 1
     case left = 2
+}
+
+enum TodoSidebarWidthUnit: Int, CustomStringConvertible {
+    case pixels = 1
+    case pct = 2
+    
+    var description: String {
+        switch self {
+        case .pixels:
+            return "px"
+        case .pct:
+            return "%"
+        }
+    }
 }

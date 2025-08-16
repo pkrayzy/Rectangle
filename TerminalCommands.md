@@ -24,6 +24,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Make Smaller/Make Larger size increments](#make-smallermake-larger-size-increments)
 - [Make Smaller/Make Larger "curtain resize" with gaps](#make-smallermake-larger-curtain-resize-with-gaps)
 - [Make Smaller/Make Larger width only](#make-smallermake-larger-width-only)
+- [Make Smaller/Make Larger height only](#make-smallermake-larger-height-only)
 - [Disabling window restore when moving windows](#disabling-window-restore-when-moving-windows)
 - [Changing the margin for the snap areas](#changing-the-margin-for-the-snap-areas)
 - [Setting gaps at the screen edges](#setting-gaps-at-the-screen-edges)
@@ -33,6 +34,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Move cursor with window](#move-cursor-with-window)
 - [Prevent a window that is quickly dragged above the menu bar from going into Mission Control](#prevent-a-window-that-is-quickly-dragged-above-the-menu-bar-from-going-into-mission-control)
 - [Change the behavior of double-click window title bar](#change-the-behavior-of-double-click-window-title-bar)
+- [Change the order of displays to order by x coordinate](#change-the-order-of-displays-to-order-by-x-coordinate-for-next-and-prev-displays-commands)
 
 ## Keyboard Shortcuts
 
@@ -345,6 +347,17 @@ defaults write com.knollsoft.Rectangle largerWidth -dict-add keyCode -float 30 m
 defaults write com.knollsoft.Rectangle smallerWidth -dict-add keyCode -float 33 modifierFlags -float 786432
 ```
 
+## Make Smaller/Make Larger height only
+
+Similarly, if you only want to change the window height without changing window width, configure shortcuts for the _largerHeight_ and _smallerHeight_ commands.
+
+For example, if you want to assign `ctrl option shift ]` to _largerHeight_ and `ctrl option shift [` to _smallerHeight_, the commands would be:
+
+```bash
+defaults write com.knollsoft.Rectangle largerHeight -dict-add keyCode -float 30 modifierFlags -float 917504
+defaults write com.knollsoft.Rectangle smallerHeight -dict-add keyCode -float 33 modifierFlags -float 917504
+```
+
 ## Disabling window restore when moving windows
 
 ```bash
@@ -492,4 +505,12 @@ To disable double-click window title bar only for specific bundle ids (in exampl
 
 ```bash
 defaults write com.knollsoft.Rectangle doubleClickTitleBarIgnoredApps -string "[\"com.microsoft.Outlook\"]"
+```
+
+## Change the order of displays to order by x coordinate for next and prev displays commands
+
+By default, display order is left-to-right, line-by-line. You can change this to be ordered by x coordinate, left-to-right, regardless of which vertical position of the display. This was the default behavior prior to v0.87.
+
+```bash
+defaults write com.knollsoft.Rectangle screensOrderedByX -int 1
 ```

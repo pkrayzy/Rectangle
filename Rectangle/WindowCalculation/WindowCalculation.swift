@@ -141,6 +141,7 @@ class WindowCalculationFactory {
     static let firstThirdCalculation = FirstThirdCalculation()
     static let firstTwoThirdsCalculation = FirstTwoThirdsCalculation()
     static let centerThirdCalculation = CenterThirdCalculation()
+    static let centerTwoThirdsCalculation = CenterTwoThirdsCalculation()
     static let lastTwoThirdsCalculation = LastTwoThirdsCalculation()
     static let lastThirdCalculation = LastThirdCalculation()
     static let moveLeftRightCalculation = MoveLeftRightCalculation()
@@ -152,6 +153,7 @@ class WindowCalculationFactory {
     static let thirdFourthCalculation = ThirdFourthCalculation()
     static let lastFourthCalculation = LastFourthCalculation()
     static let firstThreeFourthsCalculation = FirstThreeFourthsCalculation()
+    static let centerThreeFourthsCalculation = CenterThreeFourthsCalculation()
     static let lastThreeFourthsCalculation = LastThreeFourthsCalculation()
     static let topLeftSixthCalculation = TopLeftSixthCalculation()
     static let topCenterSixthCalculation = TopCenterSixthCalculation()
@@ -195,6 +197,8 @@ class WindowCalculationFactory {
      .smaller: changeSizeCalculation,
      .largerWidth: changeSizeCalculation,
      .smallerWidth: changeSizeCalculation,
+     .largerHeight: changeSizeCalculation,
+     .smallerHeight: changeSizeCalculation,
      .bottomHalf: bottomHalfCalculation,
      .topHalf: topHalfCalculation,
      .center: centerCalculation,
@@ -206,6 +210,7 @@ class WindowCalculationFactory {
      .firstThird: firstThirdCalculation,
      .firstTwoThirds: firstTwoThirdsCalculation,
      .centerThird: centerThirdCalculation,
+     .centerTwoThirds: centerTwoThirdsCalculation,
      .lastTwoThirds: lastTwoThirdsCalculation,
      .lastThird: lastThirdCalculation,
      .moveLeft: moveLeftRightCalculation,
@@ -219,6 +224,7 @@ class WindowCalculationFactory {
      .thirdFourth: thirdFourthCalculation,
      .lastFourth: lastFourthCalculation,
      .firstThreeFourths: firstThreeFourthsCalculation,
+     .centerThreeFourths: centerThreeFourthsCalculation,
      .lastThreeFourths: lastThreeFourthsCalculation,
      .topLeftSixth: topLeftSixthCalculation,
      .topCenterSixth: topCenterSixthCalculation,

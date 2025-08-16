@@ -90,6 +90,13 @@ class ScreenDetection {
     }
 
     func order(screens: [NSScreen]) -> [NSScreen] {
+        if Defaults.screensOrderedByX.userEnabled {
+            let screensOrderedByX = screens.sorted(by: { screen1, screen2 in
+                return screen1.frame.origin.x < screen2.frame.origin.x
+            })
+            return screensOrderedByX
+        }
+        
         let sortedScreens = screens.sorted(by: { screen1, screen2 in
             if screen2.frame.maxY <= screen1.frame.minY {
                 return true
@@ -148,10 +155,11 @@ extension NSScreen {
         }
         
         if !ignoreTodo, Defaults.todo.userEnabled, Defaults.todoMode.enabled, TodoManager.todoScreen == self, TodoManager.hasTodoWindow() {
+            let sidebarWidth = TodoManager.getSidebarWidth(visibleFrameWidth: visibleFrame.width)
+            newFrame.size.width -= sidebarWidth
             if Defaults.todoSidebarSide.value == .left {
-                newFrame.origin.x += Defaults.todoSidebarWidth.cgFloat
+                newFrame.origin.x += sidebarWidth
             }
-            newFrame.size.width -= Defaults.todoSidebarWidth.cgFloat
         }
 
         if Defaults.screenEdgeGapsOnMainScreenOnly.enabled, self != NSScreen.screens.first {
