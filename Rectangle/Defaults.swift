@@ -29,9 +29,11 @@ class Defaults {
     static let resizeOnDirectionalMove = BoolDefault(key: "resizeOnDirectionalMove")
     static let ignoredSnapAreas = IntDefault(key: "ignoredSnapAreas")
     static let traverseSingleScreen = OptionalBoolDefault(key: "traverseSingleScreen")
+    static let useCursorScreenDetection = BoolDefault(key: "useCursorScreenDetection")
     static let minimumWindowWidth = FloatDefault(key: "minimumWindowWidth")
     static let minimumWindowHeight = FloatDefault(key: "minimumWindowHeight")
     static let sizeOffset = FloatDefault(key: "sizeOffset")
+    static let widthStepSize = FloatDefault(key: "widthStepSize", defaultValue: 30)
     static let unsnapRestore = OptionalBoolDefault(key: "unsnapRestore")
     static let curtainChangeSize = OptionalBoolDefault(key: "curtainChangeSize")
     static let relaunchOpensMenu = BoolDefault(key: "relaunchOpensMenu")
@@ -119,6 +121,7 @@ class Defaults {
         minimumWindowWidth,
         minimumWindowHeight,
         sizeOffset,
+        widthStepSize,
         unsnapRestore,
         curtainChangeSize,
         relaunchOpensMenu,
