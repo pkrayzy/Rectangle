@@ -47,6 +47,7 @@ class Defaults {
     static let lastVersion = StringDefault(key: "lastVersion")
     static let installVersion = StringDefault(key: "installVersion")
     static let showAllActionsInMenu = OptionalBoolDefault(key: "showAllActionsInMenu")
+    static let showAdditionalSizesInMenu = OptionalBoolDefault(key: "showAdditionalSizesInMenu")
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
     static let footprintAlpha = FloatDefault(key: "footprintAlpha", defaultValue: 0.3)
     static let footprintBorderWidth = FloatDefault(key: "footprintBorderWidth", defaultValue: 2)
@@ -67,6 +68,8 @@ class Defaults {
     static let notifiedOfProblemApps = BoolDefault(key: "notifiedOfProblemApps")
     static let specifiedHeight = FloatDefault(key: "specifiedHeight", defaultValue: 1050)
     static let specifiedWidth = FloatDefault(key: "specifiedWidth", defaultValue: 1680)
+    static let horizontalSplitRatio = FloatDefault(key: "horizontalSplitRatio", defaultValue: 50)
+    static let verticalSplitRatio = FloatDefault(key: "verticalSplitRatio", defaultValue: 50)
     static let moveCursorAcrossDisplays = OptionalBoolDefault(key: "moveCursorAcrossDisplays")
     static let moveCursor = OptionalBoolDefault(key: "moveCursor")
     static let autoMaximize = OptionalBoolDefault(key: "autoMaximize")
@@ -96,7 +99,6 @@ class Defaults {
     static let systemWideMouseDownApps = JSONDefault<Set<String>>(key:"systemWideMouseDownApps", defaultValue: Set<String>(["org.languagetool.desktop", "com.microsoft.teams2"]))
     static let internalTilingNotified = BoolDefault(key: "internalTilingNotified")
     static let screensOrderedByX = OptionalBoolDefault(key: "screensOrderedByX")
-    
     static var array: [Default] = [
         launchOnLogin,
         disabledApps,
@@ -133,6 +135,7 @@ class Defaults {
         screenEdgeGapsOnMainScreenOnly,
         screenEdgeGapTopNotch,
         showAllActionsInMenu,
+        showAdditionalSizesInMenu,
         footprintAlpha,
         footprintBorderWidth,
         footprintFade,
@@ -151,6 +154,8 @@ class Defaults {
         notifiedOfProblemApps,
         specifiedHeight,
         specifiedWidth,
+        horizontalSplitRatio,
+        verticalSplitRatio,
         moveCursorAcrossDisplays,
         moveCursor,
         autoMaximize,
@@ -177,7 +182,8 @@ class Defaults {
         ignoreDragSnapToo,
         systemWideMouseDown,
         systemWideMouseDownApps,
-        screensOrderedByX
+        screensOrderedByX,
+        showAdditionalSizesInMenu
     ]
 }
 
