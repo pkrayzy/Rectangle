@@ -51,15 +51,15 @@ extension CycleSize {
     var title: String {
         switch self {
         case .twoThirds:
-            "⅔"
+            "⅗"
         case .oneHalf:
             "½"
         case .oneThird:
-            "⅓"
+            "⅖"
         case .oneQuarter:
-            "¼"
+            "⅓"
         case .threeQuarters:
-            "¾"
+            "⅔"
         }
     }
     
@@ -72,9 +72,9 @@ extension CycleSize {
         case .oneThird:
             2 / 5
         case .oneQuarter:
-            3 / 10
+            1 / 3
         case .threeQuarters:
-            7 / 10
+            2 / 3
         }
     }
     
