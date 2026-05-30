@@ -10364,19 +10364,84 @@
       }
     },
     "Bottom Center Left Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 가운데 왼쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dưới cùng Trung tâm Bên trái Thứ tám"
+          }
+        }
+      }
     },
     "Bottom Center Right Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 가운데 오른쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dưới cùng Trung tâm Bên phải Thứ tám"
+          }
+        }
+      }
     },
     "Bottom eighths from corners; thirds" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래쪽 1/8, 모서리에서 3등분"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phần tám dưới cùng từ các góc; phần ba"
+          }
+        }
+      }
     },
     "Bottom Left Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 왼쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dưới cùng bên trái thứ tám"
+          }
+        }
+      }
     },
     "Bottom Right Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 오른쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dưới cùng bên phải thứ tám"
+          }
+        }
+      }
     },
     "Bottom sixths from corners; thirds" : {
       "localizations" : {
@@ -10557,10 +10622,36 @@
       }
     },
     "Bottom Third" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 1/3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ ba dưới cùng"
+          }
+        }
+      }
     },
     "Bottom Two Thirds" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 2/3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai phần ba dưới cùng"
+          }
+        }
+      }
     },
     "bRX-dV-iAR.title" : {
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Center Half\"; ObjectID = \"bRX-dV-iAR\";",
@@ -12615,6 +12706,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Use cursor position for screen detection"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화면 감지에 커서 위치 사용"
           }
         },
         "vi" : {
@@ -16072,7 +16169,20 @@
       }
     },
     "Eighths" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ tám"
+          }
+        }
+      }
     },
     "Enable Todo Mode" : {
       "localizations" : {
@@ -16244,6 +16354,12 @@
             "value" : "⋯"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⋯"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16265,6 +16381,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Extra Shortcuts"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가 단축키"
           }
         },
         "ru" : {
@@ -20032,7 +20154,20 @@
       }
     },
     "Grid Positions" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그리드 위치"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vị trí lưới"
+          }
+        }
+      }
     },
     "gtf-PD-IHm.label" : {
       "comment" : "Class = \"NSTabViewItem\"; label = \"General\"; ObjectID = \"gtf-PD-IHm\";",
@@ -20112,8 +20247,8 @@
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "설정"
+            "state" : "translated",
+            "value" : "일반"
           }
         },
         "lt" : {
@@ -21055,7 +21190,20 @@
       }
     },
     "Half Split Ratios" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "절반 분할 비율"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tỷ lệ chia một nửa"
+          }
+        }
+      }
     },
     "Halves" : {
       "localizations" : {
@@ -21128,7 +21276,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "2등분"
+            "value" : "절반"
           }
         },
         "lt" : {
@@ -22256,7 +22404,20 @@
       }
     },
     "Horizontal (L/R, %)" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수평 (좌/우, %)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngang (trái/phải, %)"
+          }
+        }
+      }
     },
     "hQb-2v-fYv.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Smart Quotes\"; ObjectID = \"hQb-2v-fYv\";",
@@ -27469,6 +27630,12 @@
             "value" : "Larger Width"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "너비 크게"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29722,7 +29889,20 @@
       }
     },
     "Middle Third" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중간 1/3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ ba ở giữa"
+          }
+        }
+      }
     },
     "mK6-2p-4JG.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Check Grammar With Spelling\"; ObjectID = \"mK6-2p-4JG\";",
@@ -31103,10 +31283,36 @@
       }
     },
     "Ninths" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/9"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ chín"
+          }
+        }
+      }
     },
     "Ninths (3×3)" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/9 (3×3)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ chín (3×3)"
+          }
+        }
+      }
     },
     "NMo-om-nkz.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Services\"; ObjectID = \"NMo-om-nkz\";",
@@ -34512,7 +34718,20 @@
       }
     },
     "Press the shortcut repeatedly to cycle through all positions in the grid." : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그리드의 모든 위치를 순환하려면 단축키를 여러 번 누르십시오."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhấn phím tắt nhiều lần để duyệt qua tất cả các vị trí trong lưới."
+          }
+        }
+      }
     },
     "Ptp-SP-VEL.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Bigger\"; ObjectID = \"Ptp-SP-VEL\";",
@@ -35908,6 +36127,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "cycle positions on quadrants, cycle sizes on half"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/4 동작시 위치 순환, 절반 동작시 창 크기 순환"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vị trí chu kỳ trên góc phần tư, kích thước chu kỳ trên một nửa"
           }
         }
       }
@@ -38801,13 +39032,52 @@
       }
     },
     "Show additional sizes in menu" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴에 추가 크기 표시"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị kích thước bổ sung trong menu"
+          }
+        }
+      }
     },
     "Sixteenths" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/16"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ mười sáu"
+          }
+        }
+      }
     },
     "Sixteenths (4×4)" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/16 (4×4)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ mười sáu (4×4)"
+          }
+        }
+      }
     },
     "Sixths" : {
       "localizations" : {
@@ -39162,6 +39432,12 @@
             "value" : "Smaller Width"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "너비 작게"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39392,8 +39668,8 @@
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Rectangle 환경설정"
+            "state" : "translated",
+            "value" : "Rectangle 설정"
           }
         },
         "lt" : {
@@ -41163,19 +41439,84 @@
       }
     },
     "Top Center Left Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위 가운데 왼쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trên cùng Bên trái Thứ tám"
+          }
+        }
+      }
     },
     "Top Center Right Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위 가운데 오른쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trên cùng Bên phải Thứ tám"
+          }
+        }
+      }
     },
     "Top eighths from corners; maximize" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위쪽 1/8, 모서리에서 최대화"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ tám hàng đầu từ các quả phạt góc; tối đa"
+          }
+        }
+      }
     },
     "Top Left Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위 왼쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trên cùng bên trái thứ tám"
+          }
+        }
+      }
     },
     "Top Right Eighth" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오른쪽 1/8"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trên cùng bên phải thứ tám"
+          }
+        }
+      }
     },
     "Top screen edge tiling in macOS is now disabled" : {
       "extractionState" : "manual",
@@ -41373,14 +41714,46 @@
       }
     },
     "Top Third" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위 1/3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trên cùng thứ ba"
+          }
+        }
+      }
     },
     "Top Two Thirds" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위 2/3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai phần ba hàng đầu"
+          }
+        }
+      }
     },
     "Top/bottom halves" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위/아래 반"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41912,10 +42285,36 @@
       }
     },
     "Twelfths" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/12"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ mười hai"
+          }
+        }
+      }
     },
     "Twelfths (4×3)" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/12 (4×3)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thứ mười hai (4×3)"
+          }
+        }
+      }
     },
     "tXI-mr-wws.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Open Recent\"; ObjectID = \"tXI-mr-wws\";",
@@ -42380,7 +42779,21 @@
       }
     },
     "Update Available…" : {
-      "extractionState" : "manual"
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트 가능…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cập nhật có sẵn…"
+          }
+        }
+      }
     },
     "uQy-DD-JDr.title" : {
       "comment" : "Class = \"NSMenu\"; title = \"Rectangle\"; ObjectID = \"uQy-DD-JDr\";",
@@ -43170,8 +43583,8 @@
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "키보드 단축키"
+            "state" : "translated",
+            "value" : "단축키"
           }
         },
         "lt" : {
@@ -43837,7 +44250,20 @@
       }
     },
     "Vertical (T/B, %)" : {
-
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수직 (상/하, %)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dọc (T/B, %)"
+          }
+        }
+      }
     },
     "Vfd-fe-hCe.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"ⓘ\"; ObjectID = \"Vfd-fe-hCe\";",
@@ -46056,10 +46482,22 @@
             "value" : "Width Step (px)"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "너비 단위 (px)"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шаг ширины (px)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bước chiều rộng (px)"
           }
         }
       }
