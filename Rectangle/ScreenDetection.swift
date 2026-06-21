@@ -1,10 +1,4 @@
-//
-//  ScreenDetection.swift
-//  Rectangle
-//
-//  Created by Ryan Hanson on 6/12/19.
-//  Copyright © 2019 Ryan Hanson. All rights reserved.
-//
+/// ScreenDetection.swift
 
 import Cocoa
 
@@ -158,7 +152,11 @@ extension NSScreen {
 
     func adjustedVisibleFrame(_ ignoreTodo: Bool = false, _ ignoreStage: Bool = false) -> CGRect {
         var newFrame = visibleFrame
-        
+
+        if !NSScreen.screensHaveSeparateSpaces && Defaults.combinedDisplayMode.userEnabled {
+            newFrame = NSScreen.screens.reduce(CGRect.null) { $0.union($1.visibleFrame) }
+        }
+
         if !ignoreStage && Defaults.stageSize.value > 0 {
             if StageUtil.stageCapable && StageUtil.stageEnabled && StageUtil.stageStripShow && StageUtil.isStageStripVisible(self) {
                 let stageSize = Defaults.stageSize.value < 1
@@ -173,7 +171,7 @@ extension NSScreen {
         }
         
         if !ignoreTodo, Defaults.todo.userEnabled, Defaults.todoMode.enabled, TodoManager.todoScreen == self, TodoManager.hasTodoWindow() {
-            let sidebarWidth = TodoManager.getSidebarWidth(visibleFrameWidth: visibleFrame.width)
+            let sidebarWidth = TodoManager.getSidebarWidth(visibleFrameWidth: newFrame.width)
             newFrame.size.width -= sidebarWidth
             if Defaults.todoSidebarSide.value == .left {
                 newFrame.origin.x += sidebarWidth

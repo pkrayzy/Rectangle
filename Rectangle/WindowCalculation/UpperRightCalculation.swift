@@ -1,14 +1,13 @@
-//
-//  UpperRightCalculation.swift
-//  Rectangle, Ported from Spectacle
-//
-//  Created by Ryan Hanson on 6/14/19.
-//  Copyright © 2019 Ryan Hanson. All rights reserved.
-//
+/// UpperRightCalculation.swift
 
 import Foundation
 
-class UpperRightCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalculation, QuartersRepeated {
+class UpperRightCalculation: WindowCalculation, CornerCycleExpansionCalculation, QuartersRepeated {
+    
+    let horizontalSide: HalfSplitSide = .trailing
+    let verticalSide: HalfSplitSide = .leading
+    var horizontalSplitFraction: Float { 1.0 - Defaults.horizontalSplitRatio.value / 100.0 }
+    var verticalSplitFraction: Float { Defaults.verticalSplitRatio.value / 100.0 }
 
     override func calculateRect(_ params: RectCalculationParameters) -> RectResult {
 
@@ -31,22 +30,17 @@ class UpperRightCalculation: WindowCalculation, RepeatedExecutionsInThirdsCalcul
     }
 
     func quarterRect(_ visibleFrameOfScreen: CGRect) -> RectResult {
-        var rect = visibleFrameOfScreen
-        rect.size.width = floor(visibleFrameOfScreen.width / 2.0)
-        rect.origin.x = visibleFrameOfScreen.maxX - rect.width
-        rect.size.height = floor(visibleFrameOfScreen.height / 2.0)
-        rect.origin.y = visibleFrameOfScreen.maxY - rect.height
-        return RectResult(rect, subAction: .topRightQuarter)
+        return RectResult(cornerRect(visibleFrameOfScreen,
+                                     horizontalFraction: horizontalSplitFraction,
+                                     verticalFraction: verticalSplitFraction),
+                          subAction: .topRightQuarter)
     }
 
-    func calculateFractionalRect(_ params: RectCalculationParameters, fraction: Float) -> RectResult {
-        let visibleFrameOfScreen = params.visibleFrameOfScreen
-
-        var rect = visibleFrameOfScreen
-        rect.size.width = floor(visibleFrameOfScreen.width * CGFloat(fraction))
-        rect.origin.x = visibleFrameOfScreen.maxX - rect.width
-        rect.size.height = floor(visibleFrameOfScreen.height / 2.0)
-        rect.origin.y = visibleFrameOfScreen.maxY - rect.height
-        return RectResult(rect)
+    private func cornerRect(_ visibleFrameOfScreen: CGRect, horizontalFraction: Float, verticalFraction: Float) -> CGRect {
+        HalfSplitFrameCalculation.cornerRect(in: visibleFrameOfScreen,
+                                             horizontalSide: horizontalSide,
+                                             verticalSide: verticalSide,
+                                             horizontalFraction: horizontalFraction,
+                                             verticalFraction: verticalFraction)
     }
 }

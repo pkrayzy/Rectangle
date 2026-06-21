@@ -1,10 +1,4 @@
-//
-//  AppDelegate.swift
-//  Rectangle
-//
-//  Created by Ryan Hanson on 6/11/19.
-//  Copyright © 2019 Ryan Hanson. All rights reserved.
-//
+/// AppDelegate.swift
 
 import Cocoa
 import Sparkle
@@ -32,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowCalculationFactory: WindowCalculationFactory!
     private var snappingManager: SnappingManager!
     private var titleBarManager: TitleBarManager!
+    private var greenButtonManager: GreenButtonManager!
     
     private var prefsWindowController: NSWindowController?
     
@@ -123,6 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Defaults.installVersion.value = currentVersion
             Defaults.allowAnyShortcut.enabled = true
         }
+        MASShortcutMigration.syncRenamedSideShortcutAliases()
         
         Defaults.lastVersion.value = currentVersion
     }
@@ -158,6 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.applicationToggle = ApplicationToggle(shortcutManager: shortcutManager)
         self.snappingManager = SnappingManager()
         self.titleBarManager = TitleBarManager()
+        self.greenButtonManager = GreenButtonManager()
         self.initializeTodo()
         checkForProblematicApps()
         MacTilingDefaults.checkForBuiltInTiling(skipIfAlreadyNotified: true)
@@ -376,9 +373,8 @@ extension AppDelegate: NSMenuDelegate {
             if frontmostWindow == nil {
                 menuItem.isEnabled = false
             }
-            if screenCount == 1
-                && (windowAction == .nextDisplay || windowAction == .previousDisplay) {
-                menuItem.isEnabled = false
+            if windowAction == .nextDisplay || windowAction == .previousDisplay {
+                menuItem.isHidden = screenCount == 1 || Defaults.combinedDisplayMode.userEnabled
             }
         }
     }
@@ -675,7 +671,12 @@ extension AppDelegate {
                 let name = (components.queryItems?.first { $0.name == "name" })?.value
                 switch (components.host, name) {
                 case ("execute-action", _):
-                    let action = (WindowAction.active.first { getUrlName($0.name) == name })
+                    let action = (WindowAction.active.first { windowAction in
+                        if let aliasName = windowAction.aliasName, getUrlName(aliasName) == name {
+                            return true
+                        }
+                        return getUrlName(windowAction.name) == name
+                    })
                     action?.postUrl()
                 case ("execute-task", "ignore-app"):
                     let bundleId = extractBundleIdParameter(fromComponents: components)

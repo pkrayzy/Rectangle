@@ -1,10 +1,4 @@
-//
-//  Config.swift
-//  Rectangle
-//
-//  Created by Ryan Hanson on 12/15/20.
-//  Copyright © 2020 Ryan Hanson. All rights reserved.
-//
+/// Config.swift
 
 import Foundation
 import MASShortcut
@@ -15,7 +9,7 @@ extension Defaults {
         
         var shortcuts = [String: Shortcut]()
         for action in WindowAction.active {
-            if let masShortcut =  MASShortcutBinder.shared()?.value(forKey: action.name) as? MASShortcut {
+            if let masShortcut = ShortcutCycle.shortcut(for: action) {
                 shortcuts[action.name] = Shortcut(masShortcut: masShortcut)
             }
         }
@@ -79,7 +73,8 @@ extension Defaults {
         }
         
         for action in WindowAction.active {
-            if let shortcut = config.shortcuts[action.name]?.toMASSHortcut() {
+            let importedShortcut = config.shortcuts[action.name] ?? action.aliasName.flatMap { config.shortcuts[$0] }
+            if let shortcut = importedShortcut?.toMASSHortcut() {
                 let dictValue = dictTransformer.reverseTransformedValue(shortcut)
                 UserDefaults.standard.setValue(dictValue, forKey: action.name)
             }

@@ -1,10 +1,4 @@
-//
-//  SnappingManager.swift
-//  Rectangle
-//
-//  Created by Ryan Hanson on 9/4/19.
-//  Copyright © 2019 Ryan Hanson. All rights reserved.
-//
+/// SnappingManager.swift
 
 import Cocoa
 
@@ -393,7 +387,7 @@ class SnappingManager {
             if Defaults.gapSize.value > 0, gapsApplicable != .none {
                 let gapSharedEdges = rectResult.subAction?.gapSharedEdge ?? hotSpot.action.gapSharedEdge
 
-                return GapCalculation.applyGaps(rectResult.rect, dimension: gapsApplicable, sharedEdges: gapSharedEdges, gapSize: Defaults.gapSize.value)
+                return GapCalculation.applyGaps(rectResult.rect, dimension: gapsApplicable, sharedEdges: gapSharedEdges, gapSize: Defaults.gapSize.value, skipTopGap: Defaults.skipGapTopEdge.enabled)
             }
             
             return rectResult.rect

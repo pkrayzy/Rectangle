@@ -343,7 +343,7 @@
                                                                         <subviews>
                                                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oac-MY-1n1">
                                                                                 <rect key="frame" x="-2" y="0.0" width="56" height="16"/>
-                                                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Left Half" id="Xc8-Sm-pig">
+                                                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Left Side" id="Xc8-Sm-pig">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
                                                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -392,7 +392,7 @@
                                                                         <subviews>
                                                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="daG-bl-Dca">
                                                                                 <rect key="frame" x="-2" y="0.0" width="64" height="16"/>
-                                                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Right Half" id="F8S-GI-LiB">
+                                                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Right Side" id="F8S-GI-LiB">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
                                                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -441,7 +441,7 @@
                                                                         <subviews>
                                                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3T8-Nh-bKb">
                                                                                 <rect key="frame" x="-2" y="0.0" width="73" height="16"/>
-                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Center Half" id="bRX-dV-iAR">
+                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Center Section" id="bRX-dV-iAR">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
                                                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -490,7 +490,7 @@
                                                                         <subviews>
                                                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="j1Z-dN-QdR">
                                                                                 <rect key="frame" x="-2" y="0.0" width="55" height="16"/>
-                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Top Half" id="d7y-s8-7GE">
+                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Top Side" id="d7y-s8-7GE">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
                                                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -542,7 +542,7 @@
                                                                         <subviews>
                                                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xwW-KA-j8t">
                                                                                 <rect key="frame" x="-2" y="0.0" width="77" height="16"/>
-                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Bottom Half" id="ec4-FB-fMa">
+                                                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Bottom Side" id="ec4-FB-fMa">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
                                                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -2804,17 +2804,17 @@
                                                     </textField>
                                                     <popUpButton verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="pVH-s3-FHn">
                                                         <rect key="frame" x="138" y="0.0" width="362" height="24"/>
-                                                        <popUpButtonCell key="cell" type="push" title="move to adjacent on left/right, or cycle size on half" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="3GE-la-fAZ" id="ccx-Gx-MGO">
+                                                        <popUpButtonCell key="cell" type="push" title="move to adjacent on left/right, or cycle size on side" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="3GE-la-fAZ" id="ccx-Gx-MGO">
                                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" size="12" name="HelveticaNeue"/>
                                                             <menu key="menu" id="TkU-PT-5p8">
                                                                 <items>
                                                                     <menuItem title="do nothing" tag="2" id="jww-Ju-S3d"/>
                                                                     <menuItem title="cycle through displays" tag="4" id="XlM-ch-cLG"/>
-                                                                    <menuItem title="cycle sizes on half actions" id="gHH-BV-5kP"/>
+                                                                    <menuItem title="cycle sizes on side actions" id="gHH-BV-5kP"/>
                                                                     <menuItem title="move to adjacent display on left or right" tag="1" id="Z9d-Rl-RVq"/>
-                                                                    <menuItem title="move to adjacent on left/right, or cycle size on half" state="on" tag="3" id="3GE-la-fAZ"/>
-                                                                    <menuItem title="cycle positions on quadrants, cycle sizes on half" tag="5" id="qCy-Kx-9mR"/>
+                                                                    <menuItem title="move to adjacent on left/right, or cycle size on side" state="on" tag="3" id="3GE-la-fAZ"/>
+                                                                    <menuItem title="cycle positions on quadrants, cycle sizes on side" tag="5" id="qCy-Kx-9mR"/>
                                                                 </items>
                                                             </menu>
                                                         </popUpButtonCell>
@@ -2887,6 +2887,16 @@
                                                     <real value="3.4028234663852886e+38"/>
                                                 </customSpacing>
                                             </stackView>
+                                            <button verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="GTP-tg-Gap">
+                                                <rect key="frame" x="0.0" y="308" width="500" height="16"/>
+                                                <buttonCell key="cell" type="check" title="Remove gap on top screen edge" bezelStyle="regularSquare" imagePosition="left" inset="2" id="GTP-tg-Cel">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="toggleSkipGapTopEdge:" target="yhc-gS-h02" id="GTP-tg-Act"/>
+                                                </connections>
+                                            </button>
                                             <button verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="UY7-Nt-G3K">
                                                 <rect key="frame" x="0.0" y="308" width="500" height="16"/>
                                                 <buttonCell key="cell" type="check" title="Remove keyboard shortcut restrictions" bezelStyle="regularSquare" imagePosition="left" inset="2" id="n4U-FC-L9s">
@@ -3415,6 +3425,7 @@
                         <outlet property="extraSettingsButton" destination="Ext-Set-Btn" id="Ext-Set-Out"/>
                         <outlet property="gapLabel" destination="jd8-SJ-lza" id="pqG-fr-nwW"/>
                         <outlet property="gapSlider" destination="O9H-ZD-bqL" id="H7T-4Y-g8e"/>
+                        <outlet property="skipGapTopEdgeCheckbox" destination="GTP-tg-Gap" id="GTP-tg-Out"/>
                         <outlet property="hideMenuBarIconCheckbox" destination="wBT-R4-q9s" id="bkO-zn-yAZ"/>
                         <outlet property="launchOnLoginCheckbox" destination="eQJ-O3-a8H" id="iF3-bq-l1j"/>
                         <outlet property="reflowTodoShortcutView" destination="QTZ-pv-mwo" id="VYl-Tv-gFy"/>
