@@ -11,6 +11,7 @@ class Defaults {
     static let selectedCycleSizes = CycleSizesDefault()
     static let cycleSizesIsChanged = BoolDefault(key: "cycleSizesIsChanged")
     static let cornerCycleExpansionAxis = IntEnumDefault<CornerCycleExpansionAxis>(key: "cornerCycleExpansionAxis", defaultValue: .horizontal)
+    static let cooperativeCornerResize = BoolDefault(key: "cooperativeCornerResize")
     static let allowAnyShortcut = BoolDefault(key: "allowAnyShortcut")
     static let windowSnapping = OptionalBoolDefault(key: "windowSnapping")
     static let almostMaximizeHeight = FloatDefault(key: "almostMaximizeHeight")
@@ -23,7 +24,7 @@ class Defaults {
     static let snapEdgeMarginRight = FloatDefault(key: "snapEdgeMarginRight", defaultValue: 5)
     static let centeredDirectionalMove = OptionalBoolDefault(key: "centeredDirectionalMove")
     static let resizeOnDirectionalMove = BoolDefault(key: "resizeOnDirectionalMove")
-    static let moveFixedSizeToEdge = IntEnumDefault<EdgeAlignment>(key: "moveFixedSizeToEdge", defaultValue: .centered)
+    static let moveFixedSizeToEdge = IntEnumDefault<EdgeAlignment>(key: "moveFixedSizeToEdge", defaultValue: .edgesAndCorners)
     static let ignoredSnapAreas = IntDefault(key: "ignoredSnapAreas")
     static let traverseSingleScreen = OptionalBoolDefault(key: "traverseSingleScreen")
     static let useCursorScreenDetection = BoolDefault(key: "useCursorScreenDetection")
@@ -32,6 +33,7 @@ class Defaults {
     static let sizeOffset = FloatDefault(key: "sizeOffset")
     static let widthStepSize = FloatDefault(key: "widthStepSize", defaultValue: 30)
     static let unsnapRestore = OptionalBoolDefault(key: "unsnapRestore")
+    static let unsnapRestoreFromSizeChange = OptionalBoolDefault(key: "unsnapRestoreFromSizeChange")
     static let curtainChangeSize = OptionalBoolDefault(key: "curtainChangeSize")
     static let relaunchOpensMenu = BoolDefault(key: "relaunchOpensMenu")
     static let obtainWindowOnClick = OptionalBoolDefault(key: "obtainWindowOnClick")
@@ -98,7 +100,7 @@ class Defaults {
     static let systemWideMouseDown = OptionalBoolDefault(key: "systemWideMouseDown")
     static let systemWideMouseDownApps = JSONDefault<Set<String>>(key:"systemWideMouseDownApps", defaultValue: Set<String>(["org.languagetool.desktop", "com.microsoft.teams2"]))
     static let internalTilingNotified = BoolDefault(key: "internalTilingNotified")
-    static let screensOrderedByX = OptionalBoolDefault(key: "screensOrderedByX")
+    static let screensOrderedByX = IntEnumDefault<ScreenOrdering>(key: "screensOrderedByX", defaultValue: .yThenMinX)
     static let combinedDisplayMode = OptionalBoolDefault(key: "combinedDisplayMode")
     static let greenButtonOverride = BoolDefault(key: "greenButtonOverride")
     static var array: [Default] = [
@@ -110,6 +112,7 @@ class Defaults {
         selectedCycleSizes,
         cycleSizesIsChanged,
         cornerCycleExpansionAxis,
+        cooperativeCornerResize,
         allowAnyShortcut,
         windowSnapping,
         almostMaximizeHeight,
