@@ -16348,30 +16348,30 @@
       }
     },
     "Ext-Set-Cel.title" : {
-      "comment" : "Class = \"NSButtonCell\"; title = \"⋯\"; ObjectID = \"Ext-Set-Cel\";",
+      "comment" : "Class = \"NSButtonCell\"; title = \"Extras\"; ObjectID = \"Ext-Set-Cel\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "⋯"
+            "value" : "Extras"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "⋯"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "⋯"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "⋯"
           }
         }
@@ -32828,7 +32828,7 @@
         }
       }
     },
-    "Offset cycling position on overlap" : {
+    "Offset window position on overlap" : {
 
     },
     "ogc-rX-tC1.title" : {
@@ -34559,6 +34559,9 @@
           }
         }
       }
+    },
+    "Preserve maximize state when moving across displays" : {
+
     },
     "Press the shortcut repeatedly to cycle through all positions in the grid." : {
       "localizations" : {
@@ -38896,6 +38899,9 @@
           }
         }
       }
+    },
+    "Show stacked window badge on hover" : {
+
     },
     "Side Split Ratio" : {
       "localizations" : {

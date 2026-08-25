@@ -48,6 +48,7 @@ class SettingsViewController: NSViewController {
     private var cooperativeCornerResizeCheckbox: NSButton?
     private var combinedDisplayModeCheckbox: NSButton?
     private var greenButtonOverrideCheckbox: NSButton?
+    private var autoMaximizeCheckbox: NSButton?
     
     @IBAction func toggleLaunchOnLogin(_ sender: NSButton) {
         let newSetting: Bool = sender.state == .on
@@ -90,6 +91,7 @@ class SettingsViewController: NSViewController {
             if event.type == .leftMouseUp || event.type == .keyDown {
                 if Float(sender.intValue) != Defaults.gapSize.value {
                     Defaults.gapSize.value = Float(sender.intValue)
+                    skipGapTopEdgeCheckbox.isHidden = Defaults.gapSize.value == 0
                 }
             }
         }
@@ -115,6 +117,11 @@ class SettingsViewController: NSViewController {
         let enabled: Bool = sender.state == .on
         Defaults.showAdditionalSizesInMenu.enabled = enabled
         Notification.Name.showAdditionalSizesInMenuChanged.post()
+    }
+
+    @objc func toggleStackBadge(_ sender: NSButton) {
+        Defaults.stackBadge.enabled = sender.state == .on
+        Notification.Name.stackBadgeChanged.post()
     }
 
     @objc func toggleCyclingOverlapOffset(_ sender: NSButton) {
@@ -174,6 +181,10 @@ class SettingsViewController: NSViewController {
     @objc func toggleGreenButtonOverride(_ sender: NSButton) {
         Defaults.greenButtonOverride.enabled = sender.state == .on
         Notification.Name.greenButtonOverride.post()
+    }
+
+    @objc func toggleAutoMaximize(_ sender: NSButton) {
+        Defaults.autoMaximize.enabled = sender.state == .on
     }
 
     @IBAction func toggleTodoMode(_ sender: NSButton) {
@@ -242,12 +253,10 @@ class SettingsViewController: NSViewController {
         if response == .alertThirdButtonReturn { return }
 
         //  Restore default shortcuts
-        WindowAction.active.forEach { UserDefaults.standard.removeObject(forKey: $0.name) }
         let rectangleDefaults = response == .alertFirstButtonReturn
-        if rectangleDefaults != Defaults.alternateDefaultShortcuts.enabled {
-            Defaults.alternateDefaultShortcuts.enabled = rectangleDefaults
-            Notification.Name.changeDefaults.post()
-        }
+        WindowAction.active.forEach { UserDefaults.standard.removeObject(forKey: $0.name) }
+        Defaults.alternateDefaultShortcuts.enabled = rectangleDefaults
+        Notification.Name.changeDefaults.post()
         
         // Restore snap areas
         Defaults.portraitSnapAreas.typedValue = nil
@@ -796,6 +805,7 @@ class SettingsViewController: NSViewController {
             mainStackView.addArrangedSubview(bottomVerticalThirdRow)
             mainStackView.addArrangedSubview(topVerticalTwoThirdsRow)
             mainStackView.addArrangedSubview(bottomVerticalTwoThirdsRow)
+            mainStackView.setCustomSpacing(10, after: bottomVerticalTwoThirdsRow)
             // Grid Positions - cycling shortcuts for larger grids
             let showAdditionalSizesCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Show additional sizes in menu", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleShowAdditionalSizesInMenu(_:)))
             showAdditionalSizesCheckbox.state = Defaults.showAdditionalSizesInMenu.userEnabled ? .on : .off
@@ -803,7 +813,6 @@ class SettingsViewController: NSViewController {
             showAdditionalSizesCheckbox.alignment = .left
             showAdditionalSizesCheckbox.imageHugsTitle = true
 
-            //
             let gridHeaderLabel = NSTextField(labelWithString: NSLocalizedString("Grid Positions", tableName: "Main", value: "", comment: ""))
             gridHeaderLabel.font = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
             gridHeaderLabel.alignment = .center
@@ -896,16 +905,18 @@ class SettingsViewController: NSViewController {
                 sixteenthsCyclingShortcutView
             ])
 
-            let overlapOffsetCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Offset cycling position on overlap", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleCyclingOverlapOffset(_:)))
+            let overlapOffsetCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Offset window position on overlap", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleCyclingOverlapOffset(_:)))
             overlapOffsetCheckbox.state = Defaults.cyclingOverlapOffset.userEnabled ? .on : .off
             overlapOffsetCheckbox.translatesAutoresizingMaskIntoConstraints = false
             overlapOffsetCheckbox.alignment = .left
 
+            let stackBadgeCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Show stacked window badge on hover", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleStackBadge(_:)))
+            stackBadgeCheckbox.state = Defaults.stackBadge.userEnabled ? .on : .off
+            stackBadgeCheckbox.translatesAutoresizingMaskIntoConstraints = false
+            stackBadgeCheckbox.alignment = .left
+
             mainStackView.addArrangedSubview(gridHeaderLabel)
             mainStackView.setCustomSpacing(4, after: gridHeaderLabel)
-            mainStackView.addArrangedSubview(showAdditionalSizesCheckbox)
-            mainStackView.addArrangedSubview(overlapOffsetCheckbox)
-            mainStackView.setCustomSpacing(8, after: overlapOffsetCheckbox)
             mainStackView.addArrangedSubview(cyclingHintLabel)
             mainStackView.setCustomSpacing(8, after: cyclingHintLabel)
             mainStackView.addArrangedSubview(topLeftEighthRow)
@@ -919,6 +930,10 @@ class SettingsViewController: NSViewController {
             mainStackView.addArrangedSubview(ninthsCyclingRow)
             mainStackView.addArrangedSubview(twelfthsCyclingRow)
             mainStackView.addArrangedSubview(sixteenthsCyclingRow)
+            mainStackView.addArrangedSubview(showAdditionalSizesCheckbox)
+            mainStackView.addArrangedSubview(overlapOffsetCheckbox)
+            mainStackView.addArrangedSubview(stackBadgeCheckbox)
+            mainStackView.setCustomSpacing(8, after: stackBadgeCheckbox)
 
 
             mainStackView.addArrangedSubview(splitRatioHeaderLabel)
@@ -978,6 +993,7 @@ class SettingsViewController: NSViewController {
                 widthStepField.trailingAnchor.constraint(equalTo: largerWidthShortcutView.trailingAnchor),
                 showAdditionalSizesCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 overlapOffsetCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
+                stackBadgeCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 smallerWidthShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 topVerticalThirdShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 middleVerticalThirdShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
@@ -1061,6 +1077,8 @@ class SettingsViewController: NSViewController {
 
         initializeGreenButtonOverrideCheckbox()
 
+        initializeAutoMaximizeCheckbox()
+
         Notification.Name.configImported.onPost(using: {_ in
             self.initializeTodoModeSettings()
             self.initializeToggles()
@@ -1118,6 +1136,7 @@ class SettingsViewController: NSViewController {
         gapLabel.stringValue = "\(gapSlider.intValue) px"
         gapSlider.isContinuous = true
         skipGapTopEdgeCheckbox.state = Defaults.skipGapTopEdge.enabled ? .on : .off
+        skipGapTopEdgeCheckbox.isHidden = Defaults.gapSize.value == 0
         
         cursorAcrossCheckbox.state = Defaults.moveCursorAcrossDisplays.userEnabled ? .on : .off
 
@@ -1129,6 +1148,8 @@ class SettingsViewController: NSViewController {
         combinedDisplayModeCheckbox?.state = Defaults.combinedDisplayMode.userEnabled ? .on : .off
 
         greenButtonOverrideCheckbox?.state = Defaults.greenButtonOverride.enabled ? .on : .off
+
+        autoMaximizeCheckbox?.state = Defaults.autoMaximize.userDisabled ? .off : .on
 
         if StageUtil.stageCapable {
             stageSlider.intValue = Int32(Defaults.stageSize.value)
@@ -1213,6 +1234,21 @@ class SettingsViewController: NSViewController {
             parentStack.insertArrangedSubview(checkbox, at: insertIdx + 1)
             parentStack.insertArrangedSubview(descLabel, at: insertIdx + 2)
             greenButtonOverrideCheckbox = checkbox
+        }
+    }
+
+    private func initializeAutoMaximizeCheckbox() {
+        if autoMaximizeCheckbox == nil,
+           let parentStack = doubleClickTitleBarCheckbox.superview as? NSStackView,
+           let insertIdx = parentStack.arrangedSubviews.firstIndex(of: doubleClickTitleBarCheckbox) {
+
+            let checkbox = NSButton(checkboxWithTitle: NSLocalizedString("Preserve maximize state when moving across displays", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleAutoMaximize(_:)))
+            checkbox.state = Defaults.autoMaximize.userDisabled ? .off : .on
+            checkbox.setContentCompressionResistancePriority(.required, for: .vertical)
+            checkbox.setContentHuggingPriority(.defaultHigh, for: .vertical)
+
+            parentStack.insertArrangedSubview(checkbox, at: insertIdx + 1)
+            autoMaximizeCheckbox = checkbox
         }
     }
 

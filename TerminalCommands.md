@@ -25,6 +25,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Make Smaller/Make Larger "curtain resize" with gaps](#make-smallermake-larger-curtain-resize-with-gaps)
 - [Make Smaller/Make Larger width only](#make-smallermake-larger-width-only)
 - [Make Smaller/Make Larger height only](#make-smallermake-larger-height-only)
+- [Make Smaller shrink the height of full-height windows](#make-smaller-shrink-the-height-of-full-height-windows)
 - [Disabling window restore when moving windows](#disabling-window-restore-when-moving-windows)
 - [Changing the margin for the snap areas](#changing-the-margin-for-the-snap-areas)
 - [Setting gaps at the screen edges](#setting-gaps-at-the-screen-edges)
@@ -35,6 +36,8 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Prevent a window that is quickly dragged above the menu bar from going into Mission Control](#prevent-a-window-that-is-quickly-dragged-above-the-menu-bar-from-going-into-mission-control)
 - [Change the behavior of double-click window title bar](#change-the-behavior-of-double-click-window-title-bar)
 - [Change the order of displays to order by x coordinate](#change-the-order-of-displays-to-order-by-x-coordinate-for-next-and-prev-displays-commands)
+- [Keep window size when moving a maximized window to another display](#keep-window-size-when-moving-a-maximized-window-to-another-display)
+- [Attempt to preserve window position when moving to another display](#attempt-to-preserve-window-position-when-moving-to-another-display)
 - [Offset cycling position when overlapping another window](#offset-cycling-position-when-overlapping-another-window)
 - [Move windows that can't fill the snap area to the edge](#move-windows-that-cant-fill-the-snap-area-to-the-edge)
 
@@ -317,6 +320,8 @@ defaults write com.knollsoft.Rectangle centeredDirectionalMove -int 2
 
 By default, "Make Smaller" will decrease the window until it reaches 25% of the screen (width & height).
 
+Set either value to `0` to disable Rectangle's screen-relative limit for that dimension and rely on the application's native minimum size.
+
 ```bash
 defaults write com.knollsoft.Rectangle minimumWindowWidth -float <VALUE_BETWEEN_0_&_1>
 ```
@@ -361,6 +366,14 @@ For example, if you want to assign `ctrl option shift ]` to _largerHeight_ and `
 ```bash
 defaults write com.knollsoft.Rectangle largerHeight -dict-add keyCode -float 30 modifierFlags -float 917504
 defaults write com.knollsoft.Rectangle smallerHeight -dict-add keyCode -float 33 modifierFlags -float 917504
+```
+
+## Make Smaller shrink the height of full-height windows
+
+By default, "Make Smaller" keeps the height of a window that spans the full height of the screen (for example after "Half" or "Maximize Height") and only shrinks its width. Enable this to shrink the height as well:
+
+```bash
+defaults write com.knollsoft.Rectangle smallerShrinksMaximizedHeight -bool true
 ```
 
 ## Disabling window restore when moving windows
@@ -520,6 +533,34 @@ By default, display order is left-to-right, line-by-line. You can change this to
 defaults write com.knollsoft.Rectangle screensOrderedByX -int 1
 ```
 
+## Keep window size when moving a maximized window to another display
+
+By default, moving a maximized window to the next or previous display re-maximizes it to fill the destination display. Disable this to keep the window's size and center it on the destination display instead (so a window maximized on a smaller display won't grow to fill a larger one). This can also be toggled from Settings via the "Maximize window when moved to another display" checkbox.
+
+```bash
+defaults write com.knollsoft.Rectangle autoMaximize -int 2
+```
+
+To restore the default behavior:
+
+```bash
+defaults write com.knollsoft.Rectangle autoMaximize -int 0
+```
+
+## Attempt to preserve window position when moving to another display
+
+By default, moving a window to the next, previous, or a specific display centers it on the destination display. Enable this to instead try preserving the window's position on the destination. If the previous action was a Rectangle snap (half, third, maximize, etc.), that snap is replayed on the destination display. If the window was positioned manually, its rect is mapped proportionally from the source display to the destination display (a window at the right third stays at the right third) and clamped so it never overflows. This is off by default.
+
+```bash
+defaults write com.knollsoft.Rectangle attemptMatchOnNextPrevDisplay -int 1
+```
+
+To disable it again:
+
+```bash
+defaults write com.knollsoft.Rectangle attemptMatchOnNextPrevDisplay -int 2
+```
+
 ## Offset cycling position when overlapping another window
 
 When cycling through grid positions (sixths, eighths, ninths, twelfths, sixteenths, or quarters with quadrant cycling mode), the target position may land exactly on top of another window, hiding it completely. Enable this to apply a small offset when an overlap is detected, so you can see there's a window underneath.
@@ -538,6 +579,14 @@ By default, only one cascade layer is shown (the original window plus one offset
 
 ```bash
 defaults write com.knollsoft.Rectangle cyclingOverlapMaxCascade -int 3
+```
+
+## Show a badge with the stacked windows when hovering over a grid corner
+
+When multiple windows are stacked at the same grid position, resting the cursor on that position's top-left corner shows a small badge with the stack count and a list of the window names. Clicking a name brings that window forward.
+
+```bash
+defaults write com.knollsoft.Rectangle stackBadge -bool true
 ```
 
 ## Move windows that can't fill the snap area to the edge

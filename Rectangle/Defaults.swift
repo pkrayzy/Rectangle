@@ -4,7 +4,7 @@ import Cocoa
 
 class Defaults {
     static let launchOnLogin = BoolDefault(key: "launchOnLogin")
-    static let disabledApps = StringDefault(key: "disabledApps")
+    static let disabledApps = JSONDefault<Set<String>>(key: "disabledApps")
     static let hideMenuBarIcon = BoolDefault(key: "hideMenubarIcon")
     static let alternateDefaultShortcuts = BoolDefault(key: "alternateDefaultShortcuts") // switch to magnet defaults
     static let subsequentExecutionMode = SubsequentExecutionDefault()
@@ -28,13 +28,14 @@ class Defaults {
     static let ignoredSnapAreas = IntDefault(key: "ignoredSnapAreas")
     static let traverseSingleScreen = OptionalBoolDefault(key: "traverseSingleScreen")
     static let useCursorScreenDetection = BoolDefault(key: "useCursorScreenDetection")
-    static let minimumWindowWidth = FloatDefault(key: "minimumWindowWidth")
-    static let minimumWindowHeight = FloatDefault(key: "minimumWindowHeight")
+    static let minimumWindowWidth = DoubleDefault(key: "minimumWindowWidth", defaultValue: 0.25)
+    static let minimumWindowHeight = DoubleDefault(key: "minimumWindowHeight", defaultValue: 0.25)
     static let sizeOffset = FloatDefault(key: "sizeOffset")
     static let widthStepSize = FloatDefault(key: "widthStepSize", defaultValue: 30)
     static let unsnapRestore = OptionalBoolDefault(key: "unsnapRestore")
     static let unsnapRestoreFromSizeChange = OptionalBoolDefault(key: "unsnapRestoreFromSizeChange")
     static let curtainChangeSize = OptionalBoolDefault(key: "curtainChangeSize")
+    static let smallerShrinksMaximizedHeight = BoolDefault(key: "smallerShrinksMaximizedHeight")
     static let relaunchOpensMenu = BoolDefault(key: "relaunchOpensMenu")
     static let obtainWindowOnClick = OptionalBoolDefault(key: "obtainWindowOnClick")
     static let screenEdgeGapTop = FloatDefault(key: "screenEdgeGapTop", defaultValue: 0)
@@ -66,6 +67,7 @@ class Defaults {
     static let cyclingOverlapOffset = OptionalBoolDefault(key: "cyclingOverlapOffset")
     static let cyclingOverlapOffsetSize = FloatDefault(key: "cyclingOverlapOffsetSize", defaultValue: 11)
     static let cyclingOverlapMaxCascade = IntDefault(key: "cyclingOverlapMaxCascade", defaultValue: 1)
+    static let stackBadge = OptionalBoolDefault(key: "stackBadge")
     static let fullIgnoreBundleIds = JSONDefault<[String]>(key: "fullIgnoreBundleIds")
     static let notifiedOfProblemApps = BoolDefault(key: "notifiedOfProblemApps")
     static let specifiedHeight = FloatDefault(key: "specifiedHeight", defaultValue: 1050)
@@ -133,6 +135,7 @@ class Defaults {
         widthStepSize,
         unsnapRestore,
         curtainChangeSize,
+        smallerShrinksMaximizedHeight,
         relaunchOpensMenu,
         obtainWindowOnClick,
         screenEdgeGapTop,
@@ -152,6 +155,7 @@ class Defaults {
         todoMode,
         todoApplication,
         todoSidebarWidth,
+        todoSidebarWidthUnit,
         todoSidebarSide,
         snapModifiers,
         attemptMatchOnNextPrevDisplay,
@@ -194,6 +198,7 @@ class Defaults {
         cyclingOverlapOffset,
         cyclingOverlapOffsetSize,
         cyclingOverlapMaxCascade,
+        stackBadge,
         moveFixedSizeToEdge,
         greenButtonOverride
     ]
@@ -203,12 +208,14 @@ struct CodableDefault: Codable {
     let bool: Bool?
     let int: Int?
     let float: Float?
+    let double: Double?
     let string: String?
     
-    init(bool: Bool? = nil, int: Int? = nil, float: Float? = nil, string: String? = nil) {
+    init(bool: Bool? = nil, int: Int? = nil, float: Float? = nil, double: Double? = nil, string: String? = nil) {
         self.bool = bool
         self.int = int
         self.float = float
+        self.double = double
         self.string = string
     }
 }
@@ -360,6 +367,45 @@ class FloatDefault: Default {
     }
 }
 
+class DoubleDefault: Default {
+    public private(set) var key: String
+    private var initialized = false
+    private let defaultValue: Double
+
+    var value: Double {
+        didSet {
+            if initialized {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+    }
+
+    init(key: String, defaultValue: Double = 0) {
+        self.key = key
+        self.defaultValue = defaultValue
+        if UserDefaults.standard.object(forKey: key) == nil {
+            value = defaultValue
+        } else {
+            value = UserDefaults.standard.double(forKey: key)
+        }
+        initialized = true
+    }
+
+    func load(from codable: CodableDefault) {
+        if let double = codable.double {
+            value = double
+        } else if let float = codable.float {
+            // Legacy float-backed defaults could not distinguish an absent value
+            // from zero; preserve their effective default when migrating.
+            value = float == 0 && defaultValue != 0 ? defaultValue : Double(float)
+        }
+    }
+
+    func toCodable() -> CodableDefault {
+        CodableDefault(double: value)
+    }
+}
+
 class IntDefault: Default {
     public private(set) var key: String
     private var initialized = false
@@ -411,10 +457,11 @@ class JSONDefault<T: Codable>: StringDefault {
     }
     
     init(key: String, defaultValue: T) {
+        super.init(key: key)
+        loadFromJSON()
         if typedValue == nil {
             typedValue = defaultValue
         }
-        super.init(key: key)
     }
     
     override func load(from codable: CodableDefault) {
@@ -435,7 +482,8 @@ class JSONDefault<T: Codable>: StringDefault {
     
     private func saveToJSON(_ obj: T?) {
         let encoder = JSONEncoder()
-        
+        encoder.outputFormatting = .sortedKeys
+
         if let jsonData = try? encoder.encode(obj) {
             let jsonString = String(data: jsonData, encoding: .utf8)
             if jsonString != value {
