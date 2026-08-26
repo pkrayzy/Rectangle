@@ -66,6 +66,10 @@ extension CornerCycleExpansionCalculation {
     }
     
     func calculateRepeatedRect(_ params: RectCalculationParameters) -> RectResult {
+        guard Defaults.cooperativeCornerResize.enabled else {
+            return (self as RepeatedExecutionsCalculation).calculateRepeatedRect(params)
+        }
+        
         guard params.action.isCompatibleRepeatedResizeAction(with: params.lastAction?.action) else {
             return calculateFirstRect(params)
         }
