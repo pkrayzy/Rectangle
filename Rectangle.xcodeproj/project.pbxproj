@@ -1446,7 +1446,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.100;
 				PRODUCT_BUNDLE_IDENTIFIER = com.knollsoft.Rectangle;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1480,7 +1480,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 0.99;
 				PRODUCT_BUNDLE_IDENTIFIER = com.knollsoft.Rectangle;
 				PRODUCT_NAME = "$(TARGET_NAME)";
