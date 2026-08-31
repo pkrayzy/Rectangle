@@ -38900,7 +38900,10 @@
         }
       }
     },
-    "Show stacked window badge on hover" : {
+    "Show stacked window list on hover" : {
+
+    },
+    "Toggle stacked window list" : {
 
     },
     "Side Split Ratio" : {
