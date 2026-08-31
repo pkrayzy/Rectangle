@@ -8,6 +8,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Adjust Behavior on Repeated Commands](#adjust-behavior-on-repeated-commands)
 - [Cycle thirds on repeated Center Half commands](#cycle-thirds-on-repeated-center-half-commands)
 - [Resize on Directional Move](#resize-on-directional-move)
+- [Make the half actions tile like Windows or KDE](#make-the-half-actions-tile-like-windows-or-kde)
 - [Adjust macOS Ventura Stage Manager size](#adjust-macos-ventura-stage-manager-size)
 - [Enable Todo Mode](#enable-todo-mode)
 - [Only allow drag-to-snap when modifier keys are pressed](#only-allow-drag-to-snap-when-modifier-keys-are-pressed)
@@ -33,6 +34,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Disabling gaps when maximizing](#disabling-gaps-when-maximizing)
 - [Enabling snap areas for sixths](#enabling-snap-areas-for-sixths)
 - [Move cursor with window](#move-cursor-with-window)
+- [Control Enhanced UI handling](#control-enhanced-ui-handling)
 - [Prevent a window that is quickly dragged above the menu bar from going into Mission Control](#prevent-a-window-that-is-quickly-dragged-above-the-menu-bar-from-going-into-mission-control)
 - [Change the behavior of double-click window title bar](#change-the-behavior-of-double-click-window-title-bar)
 - [Change the order of displays to order by x coordinate](#change-the-order-of-displays-to-order-by-x-coordinate-for-next-and-prev-displays-commands)
@@ -86,6 +88,20 @@ Note that if subsequent execution mode is set to cycle displays when this is ena
 
 ```bash
 defaults write com.knollsoft.Rectangle resizeOnDirectionalMove -bool true
+```
+
+## Make the half actions tile like Windows or KDE
+
+By default, Left Half, Right Half, Top Half and Bottom Half always give the window the full height or width of the screen. Enable this to have each of them only change its own axis and keep the other one, like the Win + arrow keys on Windows or keyboard tiling on KDE:
+
+- Left Half followed by Top Half puts the window in the top left quarter (so does Top Half followed by Left Half).
+- Inside a quarter, the action for the opposite edge expands the window along that axis: Bottom Half takes a top left quarter back to Left Half, Right Half takes it to Top Half.
+- Inside a quarter, the action for the edge the window is docked to cycles the window through the cycle sizes along that axis and keeps the other one: Left Half takes a top left quarter to two thirds wide, then one third wide, while Top Half does the same to its height. This follows the setting for repeated commands; when it does not resize, the window stays as it is.
+- The same goes for halves: Right Half followed by Left Half fills the screen.
+- Windows that are not tiled, and halves that get their own action again, behave as usual (repeated executions still cycle sizes or move across displays, depending on the setting for repeated commands).
+
+```bash
+defaults write com.knollsoft.Rectangle halvesPreserveOtherAxisSize -bool true
 ```
 
 ## Adjust macOS Ventura Stage Manager size
@@ -480,6 +496,27 @@ There's an option in the UI for moving the cursor with the window when going acr
 ```bash
 defaults write com.knollsoft.Rectangle moveCursor -int 1
 ```
+
+## Control Enhanced UI handling
+
+Some apps enable the macOS `AXEnhancedUserInterface` accessibility mode. Rectangle disables this mode while moving or resizing a window because its animated window updates can otherwise produce incorrect frames. Chromium browsers can also enable expensive web accessibility processing when the mode is restored.
+
+Rectangle uses automatic handling by default: it restores Enhanced UI for other apps, but leaves it disabled after Rectangle window actions, when known Chromium browser families activate, and when one is already frontmost as Rectangle starts. VoiceOver and Switch Control keep the prior restore behavior. The behavior can be overridden with:
+
+```bash
+defaults write com.knollsoft.Rectangle enhancedUI -int <MODE>
+```
+
+`enhancedUI` accepts the following values:
+
+| Mode | Behavior |
+|------|----------|
+| `1` | Always restore Enhanced UI after a Rectangle window action if it was enabled beforehand. Use this when assistive software depends on the mode. |
+| `2` | Disable Enhanced UI when encountered and do not restore it. |
+| `3` | Behave like mode 2 and also disable Enhanced UI whenever the frontmost app changes. |
+| `4` | Automatic handling (default). |
+
+Automatic handling can still interfere with third-party assistive software that enables Enhanced UI inside a Chromium browser; use mode 1 when that software depends on the mode. Modes 2 and 3 apply the same risk to every app. Legacy mode `0` is treated as mode 1.
 
 ## Prevent a window that is quickly dragged above the menu bar from going into Mission Control
 

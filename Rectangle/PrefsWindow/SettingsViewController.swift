@@ -46,9 +46,11 @@ class SettingsViewController: NSViewController {
     private var cycleSizeCheckboxes = [NSButton]()
     private var cornerCycleExpansionAxisButtons = [NSButton]()
     private var cooperativeCornerResizeCheckbox: NSButton?
+    private var stackBadgeCheckbox: NSButton?
     private var combinedDisplayModeCheckbox: NSButton?
     private var greenButtonOverrideCheckbox: NSButton?
     private var autoMaximizeCheckbox: NSButton?
+    private var halvesPreserveOtherAxisSizeCheckbox: NSButton?
     
     @IBAction func toggleLaunchOnLogin(_ sender: NSButton) {
         let newSetting: Bool = sender.state == .on
@@ -185,6 +187,10 @@ class SettingsViewController: NSViewController {
 
     @objc func toggleAutoMaximize(_ sender: NSButton) {
         Defaults.autoMaximize.enabled = sender.state == .on
+    }
+
+    @objc func toggleHalvesPreserveOtherAxisSize(_ sender: NSButton) {
+        Defaults.halvesPreserveOtherAxisSize.enabled = sender.state == .on
     }
 
     @IBAction func toggleTodoMode(_ sender: NSButton) {
@@ -910,10 +916,29 @@ class SettingsViewController: NSViewController {
             overlapOffsetCheckbox.translatesAutoresizingMaskIntoConstraints = false
             overlapOffsetCheckbox.alignment = .left
 
-            let stackBadgeCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Show stacked window badge on hover", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleStackBadge(_:)))
+            let stackBadgeCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Show stacked window list on hover", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleStackBadge(_:)))
+            self.stackBadgeCheckbox = stackBadgeCheckbox
             stackBadgeCheckbox.state = Defaults.stackBadge.userEnabled ? .on : .off
             stackBadgeCheckbox.translatesAutoresizingMaskIntoConstraints = false
             stackBadgeCheckbox.alignment = .left
+
+            let stackBadgeToggleLabel = NSTextField(labelWithString: NSLocalizedString("Toggle stacked window list", tableName: "Main", value: "", comment: ""))
+            stackBadgeToggleLabel.alignment = .right
+            stackBadgeToggleLabel.translatesAutoresizingMaskIntoConstraints = false
+            // The label yields rather than pushing the recorder out of the
+            // column it shares with the rows above.
+            stackBadgeToggleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            let stackBadgeToggleShortcutView = MASShortcutView(frame: NSRect(x: 0, y: 0, width: 160, height: 19))
+            stackBadgeToggleShortcutView.setAssociatedUserDefaultsKey(StackBadgeManager.toggleDefaultsKey, withTransformerName: MASDictionaryTransformerName)
+            stackBadgeToggleShortcutView.translatesAutoresizingMaskIntoConstraints = false
+            stackBadgeToggleShortcutView.shortcutValidator = AppShortcutValidator(defaultsKey: StackBadgeManager.toggleDefaultsKey)
+            shortcutRecordingObserver.observe([stackBadgeToggleShortcutView])
+            let stackBadgeToggleRow = NSStackView()
+            stackBadgeToggleRow.orientation = .horizontal
+            stackBadgeToggleRow.alignment = .centerY
+            stackBadgeToggleRow.spacing = 18
+            stackBadgeToggleRow.addArrangedSubview(stackBadgeToggleLabel)
+            stackBadgeToggleRow.addArrangedSubview(stackBadgeToggleShortcutView)
 
             mainStackView.addArrangedSubview(gridHeaderLabel)
             mainStackView.setCustomSpacing(4, after: gridHeaderLabel)
@@ -933,13 +958,25 @@ class SettingsViewController: NSViewController {
             mainStackView.addArrangedSubview(showAdditionalSizesCheckbox)
             mainStackView.addArrangedSubview(overlapOffsetCheckbox)
             mainStackView.addArrangedSubview(stackBadgeCheckbox)
-            mainStackView.setCustomSpacing(8, after: stackBadgeCheckbox)
+            mainStackView.setCustomSpacing(6, after: stackBadgeCheckbox)
+            mainStackView.addArrangedSubview(stackBadgeToggleRow)
+            mainStackView.setCustomSpacing(8, after: stackBadgeToggleRow)
 
 
             mainStackView.addArrangedSubview(splitRatioHeaderLabel)
             mainStackView.setCustomSpacing(10, after: splitRatioHeaderLabel)
             mainStackView.addArrangedSubview(hSplitRow)
             mainStackView.addArrangedSubview(vSplitRow)
+
+            let halvesCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Half actions preserve the window's size on the other axis", tableName: "Main", value: "", comment: ""), target: self, action: #selector(toggleHalvesPreserveOtherAxisSize(_:)))
+            halvesCheckbox.state = Defaults.halvesPreserveOtherAxisSize.enabled ? .on : .off
+            halvesCheckbox.toolTip = NSLocalizedString("Left Half then Top Half moves the window to the top left quarter; the action for the opposite edge expands it back.", tableName: "Main", value: "", comment: "")
+            halvesCheckbox.translatesAutoresizingMaskIntoConstraints = false
+            halvesCheckbox.alignment = .left
+
+            mainStackView.setCustomSpacing(8, after: vSplitRow)
+            mainStackView.addArrangedSubview(halvesCheckbox)
+            halvesPreserveOtherAxisSizeCheckbox = halvesCheckbox
 
             NSLayoutConstraint.activate([
                 headerLabel.widthAnchor.constraint(equalTo: mainStackView.widthAnchor),
@@ -963,6 +1000,8 @@ class SettingsViewController: NSViewController {
                 ninthsCyclingLabel.widthAnchor.constraint(equalTo: twelfthsCyclingLabel.widthAnchor),
                 twelfthsCyclingLabel.widthAnchor.constraint(equalTo: sixteenthsCyclingLabel.widthAnchor),
                 sixteenthsCyclingLabel.widthAnchor.constraint(equalTo: hSplitLabel.widthAnchor),
+                stackBadgeToggleShortcutView.leadingAnchor.constraint(equalTo: sixteenthsCyclingShortcutView.leadingAnchor),
+                stackBadgeToggleShortcutView.widthAnchor.constraint(equalToConstant: 160),
                 hSplitLabel.widthAnchor.constraint(equalTo: vSplitLabel.widthAnchor),
                 largerWidthLabelStack.widthAnchor.constraint(equalTo: smallerWidthLabelStack.widthAnchor),
                 largerWidthShortcutView.widthAnchor.constraint(equalToConstant: 160),
@@ -994,6 +1033,8 @@ class SettingsViewController: NSViewController {
                 showAdditionalSizesCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 overlapOffsetCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 stackBadgeCheckbox.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
+                stackBadgeToggleRow.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
+                stackBadgeToggleShortcutView.widthAnchor.constraint(equalToConstant: 160),
                 smallerWidthShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 topVerticalThirdShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
                 middleVerticalThirdShortcutView.leadingAnchor.constraint(equalTo: largerWidthShortcutView.leadingAnchor),
@@ -1036,6 +1077,10 @@ class SettingsViewController: NSViewController {
     
     override func awakeFromNib() {
         initializeToggles()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(stackBadgeChanged),
+                                               name: .stackBadgeChanged,
+                                               object: nil)
 
         checkForUpdatesAutomaticallyCheckbox.bind(.value, to: AppDelegate.instance.updaterController.updater, withKeyPath: "automaticallyChecksForUpdates", options: nil)
         
@@ -1150,6 +1195,8 @@ class SettingsViewController: NSViewController {
         greenButtonOverrideCheckbox?.state = Defaults.greenButtonOverride.enabled ? .on : .off
 
         autoMaximizeCheckbox?.state = Defaults.autoMaximize.userDisabled ? .off : .on
+
+        halvesPreserveOtherAxisSizeCheckbox?.state = Defaults.halvesPreserveOtherAxisSize.enabled ? .on : .off
 
         if StageUtil.stageCapable {
             stageSlider.intValue = Int32(Defaults.stageSize.value)
@@ -1426,6 +1473,10 @@ class SettingsViewController: NSViewController {
 
     private func setToggleStateForCooperativeCornerResizeCheckbox() {
         cooperativeCornerResizeCheckbox?.state = Defaults.cooperativeCornerResize.enabled ? .on : .off
+    }
+
+    @objc private func stackBadgeChanged() {
+        stackBadgeCheckbox?.state = Defaults.stackBadge.userEnabled ? .on : .off
     }
 
 }

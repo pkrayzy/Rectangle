@@ -1,5 +1,6 @@
 /// RectangleTests.swift
 
+import Carbon.HIToolbox
 import MASShortcut
 import XCTest
 @testable import Rectangle
@@ -134,6 +135,222 @@ class ScreenFlippedTests: XCTestCase {
     }
 }
 
+final class DockVisibleFrameTests: XCTestCase {
+    private let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+    private let visibleWithoutDock = CGRect(x: 0, y: 0, width: 1440, height: 875)
+
+    func testAddsMissingBottomDockInset() {
+        let dock = CGRect(x: 400, y: 8, width: 640, height: 62)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: visibleWithoutDock, dockFrame: dock),
+            CGRect(x: 0, y: 70, width: 1440, height: 805)
+        )
+    }
+
+    func testAddsMissingLeftDockInset() {
+        let dock = CGRect(x: 8, y: 180, width: 62, height: 540)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: visibleWithoutDock, dockFrame: dock),
+            CGRect(x: 70, y: 0, width: 1370, height: 875)
+        )
+    }
+
+    func testAddsMissingRightDockInset() {
+        let dock = CGRect(x: 1370, y: 180, width: 62, height: 540)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: visibleWithoutDock, dockFrame: dock),
+            CGRect(x: 0, y: 0, width: 1370, height: 875)
+        )
+    }
+
+    func testPreservesAccurateAppKitInsetWhenDockFrameDiffersSlightly() {
+        let reportedVisibleFrame = CGRect(x: 0, y: 60, width: 1440, height: 815)
+        let dock = CGRect(x: 30, y: 10, width: 1380, height: 53)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: reportedVisibleFrame, dockFrame: dock),
+            reportedVisibleFrame
+        )
+    }
+
+    func testPreservesPlausibleAppKitInsetWhenAXDiffersMaterially() {
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+        let dock = CGRect(x: 400, y: 8, width: 640, height: 32)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: reportedVisibleFrame, dockFrame: dock),
+            reportedVisibleFrame
+        )
+    }
+
+    func testReclaimsPhantomInsetAfterDockMovesToAnotherDisplay() {
+        let externalScreen = CGRect(x: 1440, y: 0, width: 1920, height: 1080)
+        let dock = CGRect(x: 1740, y: 8, width: 1320, height: 62)
+        let staleVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+
+        XCTAssertEqual(
+            corrected(
+                visibleFrame: staleVisibleFrame,
+                screenFrames: [screen, externalScreen],
+                dockFrame: dock
+            ),
+            visibleWithoutDock
+        )
+    }
+
+    func testCorrectsNewDockDisplayAfterMove() {
+        let externalScreen = CGRect(x: 1440, y: 0, width: 1920, height: 1080)
+        let externalVisibleFrame = CGRect(x: 1440, y: 0, width: 1920, height: 1055)
+        let dock = CGRect(x: 1740, y: 8, width: 1320, height: 62)
+
+        XCTAssertEqual(
+            DockUtil.correctedVisibleFrame(
+                screenFrame: externalScreen,
+                visibleFrame: externalVisibleFrame,
+                screenFrames: [screen, externalScreen],
+                dockFrame: dock,
+                dockAutoHideEnabled: false
+            ),
+            CGRect(x: 1440, y: 70, width: 1920, height: 985)
+        )
+    }
+
+    func testAutoHideReclaimsStaleInsetAndPreservesSmallRevealBoundary() {
+        let reportedVisibleFrame = CGRect(x: 70, y: 4, width: 1370, height: 871)
+
+        XCTAssertEqual(
+            corrected(
+                visibleFrame: reportedVisibleFrame,
+                dockFrame: nil,
+                dockAutoHideEnabled: true
+            ),
+            CGRect(x: 0, y: 4, width: 1440, height: 871)
+        )
+    }
+
+    func testAutoHideReclaimsStaleBottomInset() {
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+
+        XCTAssertEqual(
+            corrected(
+                visibleFrame: reportedVisibleFrame,
+                dockFrame: nil,
+                dockAutoHideEnabled: true
+            ),
+            visibleWithoutDock
+        )
+    }
+
+    func testLiveDockClearsStaleWrongEdgeInset() {
+        let staleLeftDockFrame = CGRect(x: 4, y: 0, width: 1436, height: 875)
+        let currentBottomDock = CGRect(x: 400, y: 8, width: 640, height: 62)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: staleLeftDockFrame, dockFrame: currentBottomDock),
+            CGRect(x: 0, y: 70, width: 1440, height: 805)
+        )
+    }
+
+    func testUnreadableDockKeepsReportedFrame() {
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: reportedVisibleFrame, dockFrame: nil),
+            reportedVisibleFrame
+        )
+    }
+
+    func testCenteredDockFrameIsIgnored() {
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+        let invalidDock = CGRect(x: 400, y: 300, width: 640, height: 62)
+
+        XCTAssertEqual(
+            corrected(visibleFrame: reportedVisibleFrame, dockFrame: invalidDock),
+            reportedVisibleFrame
+        )
+    }
+
+    func testOversizedDockFrameIsIgnoredBeforeReclaimingAnotherDisplay() {
+        let externalScreen = CGRect(x: 1440, y: 0, width: 1920, height: 1080)
+        let invalidDock = CGRect(x: 1440, y: 0, width: 1920, height: 500)
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+
+        XCTAssertEqual(
+            corrected(
+                visibleFrame: reportedVisibleFrame,
+                screenFrames: [screen, externalScreen],
+                dockFrame: invalidDock
+            ),
+            reportedVisibleFrame
+        )
+    }
+
+    func testCorrectsDockOnNegativeOriginDisplay() {
+        let externalScreen = CGRect(x: -1920, y: 0, width: 1920, height: 1080)
+        let externalVisibleFrame = CGRect(x: -1920, y: 0, width: 1920, height: 1055)
+        let dock = CGRect(x: -1912, y: 240, width: 62, height: 600)
+
+        XCTAssertEqual(
+            DockUtil.correctedVisibleFrame(
+                screenFrame: externalScreen,
+                visibleFrame: externalVisibleFrame,
+                screenFrames: [externalScreen, screen],
+                dockFrame: dock,
+                dockAutoHideEnabled: false
+            ),
+            CGRect(x: -1850, y: 0, width: 1850, height: 1055)
+        )
+    }
+
+    func testAmbiguousDockHostIsIgnored() {
+        let upperScreen = CGRect(x: 0, y: 900, width: 1440, height: 900)
+        let ambiguousDock = CGRect(x: 400, y: 870, width: 640, height: 60)
+        let reportedVisibleFrame = CGRect(x: 0, y: 75, width: 1440, height: 800)
+
+        XCTAssertEqual(
+            corrected(
+                visibleFrame: reportedVisibleFrame,
+                screenFrames: [screen, upperScreen],
+                dockFrame: ambiguousDock
+            ),
+            reportedVisibleFrame
+        )
+    }
+
+    func testCombinedDisplayFrameRetainsOuterBottomDockInset() {
+        let combinedScreen = CGRect(x: 0, y: 0, width: 3360, height: 1080)
+        let combinedVisibleFrame = CGRect(x: 0, y: 0, width: 3360, height: 1055)
+        let dock = CGRect(x: 400, y: 8, width: 640, height: 62)
+
+        XCTAssertEqual(
+            DockUtil.correctedVisibleFrame(
+                screenFrame: combinedScreen,
+                visibleFrame: combinedVisibleFrame,
+                screenFrames: [combinedScreen],
+                dockFrame: dock,
+                dockAutoHideEnabled: false
+            ),
+            CGRect(x: 0, y: 70, width: 3360, height: 985)
+        )
+    }
+
+    private func corrected(visibleFrame: CGRect,
+                           screenFrames: [CGRect]? = nil,
+                           dockFrame: CGRect?,
+                           dockAutoHideEnabled: Bool = false) -> CGRect {
+        DockUtil.correctedVisibleFrame(
+            screenFrame: screen,
+            visibleFrame: visibleFrame,
+            screenFrames: screenFrames ?? [screen],
+            dockFrame: dockFrame,
+            dockAutoHideEnabled: dockAutoHideEnabled
+        )
+    }
+}
+
 class DefaultsExportTests: XCTestCase {
 
     func testOverlapDefaultsInExportArray() {
@@ -148,7 +365,7 @@ class DefaultsExportTests: XCTestCase {
 
 class ConfigImportTests: XCTestCase {
 
-    private static let shortcutKeys = WindowAction.active.map(\.name) + TodoManager.defaultsKeys
+    private static let shortcutKeys = WindowAction.active.map(\.name) + TodoManager.defaultsKeys + StackBadgeManager.defaultsKeys
     private var storedValues = [String: Any]()
     private var absentKeys = Set<String>()
 
@@ -188,6 +405,15 @@ class ConfigImportTests: XCTestCase {
     func testImportClearsOmittedTodoShortcut() throws {
         let defaultsKey = TodoManager.toggleDefaultsKey
         store(Shortcut(NSEvent.ModifierFlags.command.rawValue, 11), forKey: defaultsKey)
+
+        try loadConfig(shortcuts: [:])
+
+        XCTAssertNil(UserDefaults.standard.object(forKey: defaultsKey))
+    }
+
+    func testImportClearsOmittedStackBadgeShortcut() throws {
+        let defaultsKey = StackBadgeManager.toggleDefaultsKey
+        store(Shortcut(NSEvent.ModifierFlags.command.rawValue, 14), forKey: defaultsKey)
 
         try loadConfig(shortcuts: [:])
 
@@ -359,6 +585,10 @@ class StackBadgeGeometryTests: XCTestCase {
         XCTAssertTrue(StackBadgeGeometry.stackIndices(among: [], cascadeRange: 15, tolerance: 4).isEmpty)
     }
 
+
+
+
+
     // Regression (review finding): an unrelated window that happens to be the
     // leftmost candidate in the gap-widened box must not mask the real stack.
     func testStackClusterLeftOutlierDoesNotMaskStack() {
@@ -374,6 +604,256 @@ class StackBadgeGeometryTests: XCTestCase {
     func testTodoSidebarWidthUnitInExportArray() {
         let keys = Defaults.array.map { $0.key }
         XCTAssertTrue(keys.contains("todoSidebarWidthUnit"), "todoSidebarWidthUnit missing from Defaults.array")
+    }
+}
+
+/// The cascade math itself. Asserting the resulting rect matters: an earlier
+/// version of this feature was certified by a test that only checked an
+/// eligibility flag, while the offset it enabled was a no-op for anyone
+/// running the default of no gaps.
+class OverlapOffsetGeometryTests: XCTestCase {
+
+    private let screen = CGRect(x: 0, y: 0, width: 1000, height: 800)
+    private let offset: CGFloat = 11
+
+    private func cascade(_ rect: CGRect, occupied: [CGPoint], maxCascade: Int = 1) -> CGRect {
+        OverlapOffsetGeometry.cascadedRect(rect,
+                                           occupiedTopLefts: occupied,
+                                           screenFrame: screen,
+                                           offset: offset,
+                                           maxCascade: maxCascade)
+    }
+
+    /// A maximized window with no gaps fills the visible frame, so there is
+    /// nowhere to shift it - and the caller skips the window scan entirely.
+    func testMaximizedWithoutGapsCannotOffset() {
+        let maximized = screen
+        XCTAssertFalse(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
+        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
+                       maximized)
+    }
+
+    /// Gaps larger than the offset leave room, so maximized windows cascade.
+    func testMaximizedWithGapsOffsets() {
+        let maximized = CGRect(x: 22, y: 22, width: 956, height: 756)
+        XCTAssertTrue(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
+        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
+                       CGRect(x: 33, y: 33, width: 956, height: 756))
+    }
+
+    /// Gaps smaller than the offset must not shift the window part way: it
+    /// would end up flush against the far edges, deleting the gaps there.
+    func testGapsSmallerThanOffsetDoNotOffset() {
+        let maximized = CGRect(x: 5, y: 5, width: 990, height: 790)
+        XCTAssertFalse(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
+        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
+                       maximized)
+    }
+
+    /// A half with no gaps has room across but not up, and still offsets on
+    /// the axis that fits - the behavior shipped in v0.96.
+    func testHalfOffsetsOnTheAxisWithRoom() {
+        let leftHalf = CGRect(x: 0, y: 0, width: 500, height: 800)
+        XCTAssertEqual(cascade(leftHalf, occupied: [OverlapOffsetGeometry.topLeft(of: leftHalf)]),
+                       CGRect(x: 11, y: 0, width: 500, height: 800))
+    }
+
+    func testNoOverlapLeavesTheRectAlone() {
+        let leftHalf = CGRect(x: 0, y: 0, width: 500, height: 800)
+        XCTAssertEqual(cascade(leftHalf, occupied: [CGPoint(x: 500, y: 800)]), leftHalf)
+    }
+
+    func testCascadeStopsAtMaxCascade() {
+        let quarter = CGRect(x: 0, y: 0, width: 400, height: 400)
+        let occupied = [CGPoint(x: 0, y: 400), CGPoint(x: 11, y: 411), CGPoint(x: 22, y: 422)]
+        XCTAssertEqual(cascade(quarter, occupied: occupied, maxCascade: 1).origin,
+                       CGPoint(x: 11, y: 11))
+        XCTAssertEqual(cascade(quarter, occupied: occupied, maxCascade: 3).origin,
+                       CGPoint(x: 33, y: 33))
+    }
+
+    /// Matching is by top-left corner, so a smaller window landing on a larger
+    /// one at the same corner counts as an overlap - an eighth arriving on a
+    /// quarter. Both sit against the top of the screen here, so the window
+    /// offsets across but not up.
+    func testMatchesMixedSizesAtTheSameCorner() {
+        let eighth = CGRect(x: 0, y: 600, width: 250, height: 200)
+        let quarterTopLeft = OverlapOffsetGeometry.topLeft(of: CGRect(x: 0, y: 400, width: 500, height: 400))
+        XCTAssertEqual(quarterTopLeft, OverlapOffsetGeometry.topLeft(of: eighth))
+        XCTAssertEqual(cascade(eighth, occupied: [quarterTopLeft]),
+                       CGRect(x: 11, y: 600, width: 250, height: 200))
+    }
+
+    func testCoversScreen() {
+        XCTAssertTrue(OverlapOffsetGeometry.coversScreen(screen, screenFrame: screen))
+        XCTAssertTrue(OverlapOffsetGeometry.coversScreen(CGRect(x: 22, y: 22, width: 956, height: 756),
+                                                         screenFrame: screen))
+        XCTAssertFalse(OverlapOffsetGeometry.coversScreen(CGRect(x: 0, y: 0, width: 500, height: 800),
+                                                          screenFrame: screen))
+    }
+}
+
+/// Which actions are eligible for the overlap offset. `positionCycles` alone
+/// excluded maximize, so two maximized windows landed exactly on top of each
+/// other. Eligibility is only half of it - whether an eligible window actually
+/// moves is covered by OverlapOffsetGeometryTests.
+class OverlapOffsetEligibilityTests: XCTestCase {
+
+    func testMaximizeGetsTheOffset() {
+        XCTAssertTrue(WindowAction.maximize.overlapOffsetApplies)
+    }
+
+    func testGridPositionsGetTheOffset() {
+        for action in [WindowAction.leftHalf, .topLeft, .topLeftSixth,
+                       .topLeftNinth, .topLeftEighth, .topLeftTwelfth, .topLeftSixteenth] {
+            XCTAssertTrue(action.overlapOffsetApplies, "\(action) should get the overlap offset")
+        }
+    }
+
+    /// Actions that move or resize in place have no "landed on top of
+    /// something" notion, so offsetting them would just displace the window.
+    func testMovesAndResizesDoNotGetTheOffset() {
+        for action in [WindowAction.center, .restore, .moveLeft, .moveRight, .moveUp, .moveDown,
+                       .larger, .smaller, .nextDisplay, .previousDisplay,
+                       .almostMaximize, .maximizeHeight, .tileAll, .cascadeAll] {
+            XCTAssertFalse(action.overlapOffsetApplies, "\(action) should not get the overlap offset")
+        }
+    }
+}
+
+/// The stacked-window list is driven by an event tap, so it decides which
+/// keystrokes to take from the app underneath. Taking the wrong ones would
+/// break typing system-wide while the list is open.
+class StackBadgeKeyHandlingTests: XCTestCase {
+
+    /// The flags macOS actually puts on an arrow keystroke. Every arrow event
+    /// carries them, so a test that passes an empty modifier set is asserting
+    /// against an event the system never delivers - which is exactly how a
+    /// guard that rejected .function shipped with the suite green.
+    private static let arrowFlags: NSEvent.ModifierFlags = [.function, .numericPad]
+
+    private func key(_ code: UInt16, _ modifiers: NSEvent.ModifierFlags = []) -> StackBadgeManager.NavigationKey? {
+        StackBadgeManager.navigationKey(forKeyCode: code, modifiers: modifiers)
+    }
+
+    func testNavigationKeysAreClaimed() {
+        XCTAssertEqual(key(UInt16(kVK_UpArrow), Self.arrowFlags), .up)
+        XCTAssertEqual(key(UInt16(kVK_DownArrow), Self.arrowFlags), .down)
+        XCTAssertEqual(key(UInt16(kVK_Return)), .commit)
+        XCTAssertEqual(key(UInt16(kVK_ANSI_KeypadEnter), .numericPad), .commit)
+        XCTAssertEqual(key(UInt16(kVK_Escape)), .escape)
+    }
+
+    /// Caps lock is not something the user is holding for this keystroke, and
+    /// a window list that stops navigating because caps lock is on would be
+    /// its own bug report.
+    func testCapsLockStillNavigates() {
+        XCTAssertEqual(key(UInt16(kVK_UpArrow), Self.arrowFlags.union(.capsLock)), .up)
+    }
+
+    func testOrdinaryKeysArePassedThrough() {
+        for code in [kVK_ANSI_A, kVK_ANSI_Q, kVK_Tab, kVK_Space, kVK_Delete, kVK_PageUp, kVK_Home] {
+            XCTAssertNil(key(UInt16(code)), "keyCode \(code) must reach the app underneath")
+        }
+        for code in [kVK_LeftArrow, kVK_RightArrow] {
+            XCTAssertNil(key(UInt16(code), Self.arrowFlags),
+                         "keyCode \(code) must reach the app underneath")
+        }
+    }
+
+    /// A held modifier means the keystroke belongs to the frontmost app. Shift
+    /// is included deliberately: shift-return inserts a newline in chat apps
+    /// and shift-arrow extends a selection, so claiming those would break
+    /// ordinary typing whenever the list happened to be open. The arrow cases
+    /// carry the flags macOS sends, so the modifier under test is the only
+    /// difference from a keystroke that must be claimed.
+    func testModifiedKeysArePassedThrough() {
+        for modifier in [NSEvent.ModifierFlags.command, .option, .control, .shift] {
+            for code in [kVK_UpArrow, kVK_DownArrow] {
+                XCTAssertNil(key(UInt16(code), Self.arrowFlags.union(modifier)),
+                             "arrow \(code) with \(modifier) must reach the app underneath")
+            }
+            for code in [kVK_Return, kVK_Escape] {
+                XCTAssertNil(key(UInt16(code), modifier),
+                             "keyCode \(code) with \(modifier) must reach the app underneath")
+            }
+        }
+        XCTAssertNil(key(UInt16(kVK_UpArrow), Self.arrowFlags.union([.command, .option])))
+        XCTAssertNil(key(UInt16(kVK_Return), [.shift]))
+    }
+
+    func testSelectionClampsAtBothEnds() {
+        XCTAssertEqual(StackBadgeManager.selection(from: 0, movedBy: -1, count: 4), 0)
+        XCTAssertEqual(StackBadgeManager.selection(from: 3, movedBy: 1, count: 4), 3)
+        XCTAssertEqual(StackBadgeManager.selection(from: 1, movedBy: 1, count: 4), 2)
+        XCTAssertEqual(StackBadgeManager.selection(from: 1, movedBy: -1, count: 4), 0)
+    }
+
+    func testSelectionWithNoRowsIsNil() {
+        XCTAssertNil(StackBadgeManager.selection(from: 0, movedBy: 1, count: 0))
+    }
+
+    /// Rows that would be clipped are never built, so the arrow keys can't
+    /// select - and Return can't raise - a window with no visible row.
+    func testRowsThatFitIsBoundedByTheScreenBottom() {
+        XCTAssertEqual(StackBadgeManager.rowsThatFit(below: 500, above: 0), 22)
+        XCTAssertEqual(StackBadgeManager.rowsThatFit(below: 60, above: 0), 2)
+        XCTAssertEqual(StackBadgeManager.rowsThatFit(below: 10, above: 0), 0)
+        XCTAssertEqual(StackBadgeManager.rowsThatFit(below: 0, above: 100), 0)
+    }
+}
+
+/// Which windows at a shared corner count as one stack. A window covering the
+/// screen shares its corner with every half and corner placement, so it can
+/// only join a stack, never create one - otherwise an everyday layout (one
+/// maximized window, one tiled to the left half) reads as a stack of two.
+/// Size plays no part in stack membership. A window pegged to the corner is in
+/// the stack whether it is maximized or a sixteenth - and a maximized window
+/// sitting on a smaller one is the case where the smaller window cannot be
+/// seen any other way, which is what the list exists to reveal.
+///
+/// The list briefly excluded screen-covering windows, borrowed from the
+/// overlap offset where the exclusion is necessary (a maximized window shares
+/// its origin with every placement and would otherwise shift them all, #1766).
+/// The list moves nothing, so it never needed it, and the exclusion made a
+/// maximized window over a half-screen window show no list at all.
+class StackBadgeSizeAgnosticTests: XCTestCase {
+
+    private let corner = CGPoint(x: 0, y: 0)
+    private let cascaded = CGPoint(x: 11, y: -11)
+
+    private func stack(_ origins: [CGPoint]) -> [Int] {
+        StackBadgeGeometry.stackIndices(among: origins, cascadeRange: 15, tolerance: 4)
+    }
+
+    /// The reported case: one maximized window over one half-screen window,
+    /// both pegged to the same corner, showed nothing at all.
+    func testMaximizedOverTiledIsAStack() {
+        XCTAssertEqual(stack([corner, corner]).sorted(), [0, 1])
+    }
+
+    /// The maximized windows carry the overlap offset, so they sit a cascade
+    /// step forward of the tiled window they hide.
+    func testOffsetMaximizedWindowsStillIncludeTheTiledOneBeneath() {
+        XCTAssertEqual(stack([cascaded, cascaded, corner]).sorted(), [0, 1, 2])
+    }
+
+    func testSeveralMaximizedWindowsAreAStack() {
+        XCTAssertEqual(stack([corner, cascaded]).count, 2)
+    }
+
+    func testTiledStackIsUnaffected() {
+        XCTAssertEqual(stack([corner, cascaded]).count, 2)
+    }
+
+    /// This returns the densest cluster, which for a single window is that
+    /// window; the caller is what requires two before showing anything.
+    func testLoneWindowIsItsOwnClusterAndTheCallerRejectsIt() {
+        XCTAssertEqual(stack([corner]), [0])
+    }
+
+    func testWindowAtAnotherCornerIsNotInTheCluster() {
+        XCTAssertEqual(stack([corner, CGPoint(x: 900, y: 0)]).count, 1)
     }
 }
 
@@ -545,6 +1025,208 @@ class ChangeSizeCalculationTests: XCTestCase {
         } else {
             UserDefaults.standard.removeObject(forKey: key)
         }
+    }
+}
+
+class EnhancedUITests: XCTestCase {
+    private func adjustmentEvents(
+        mode: EnhancedUI,
+        bundleIdentifier: String? = "com.google.Chrome",
+        builtInAssistiveTechnologyEnabled: Bool = false,
+        initialEnhancedUI: Bool?
+    ) -> [String] {
+        var events = [String]()
+        mode.performWindowAdjustment(
+            bundleIdentifier: bundleIdentifier,
+            builtInAssistiveTechnologyEnabled: builtInAssistiveTechnologyEnabled,
+            readEnhancedUI: {
+                events.append("read")
+                return initialEnhancedUI
+            },
+            writeEnhancedUI: { events.append("write:\($0)") },
+            adjustment: { events.append("adjust") }
+        )
+        return events
+    }
+
+    func testAutomaticModeLeavesEnhancedUIDisabledForChromium() {
+        XCTAssertEqual(
+            adjustmentEvents(mode: .automatic, initialEnhancedUI: true),
+            ["read", "write:false", "adjust"]
+        )
+    }
+
+    func testAutomaticModeRestoresEnhancedUIForOtherApps() {
+        XCTAssertEqual(
+            adjustmentEvents(
+                mode: .automatic,
+                bundleIdentifier: "com.apple.Safari",
+                initialEnhancedUI: true
+            ),
+            ["read", "write:false", "adjust", "write:true"]
+        )
+        XCTAssertEqual(
+            adjustmentEvents(
+                mode: .automatic,
+                bundleIdentifier: nil,
+                initialEnhancedUI: true
+            ),
+            ["read", "write:false", "adjust", "write:true"]
+        )
+    }
+
+    func testAutomaticModeRestoresEnhancedUIForBuiltInAssistiveTechnology() {
+        XCTAssertEqual(
+            adjustmentEvents(
+                mode: .automatic,
+                builtInAssistiveTechnologyEnabled: true,
+                initialEnhancedUI: true
+            ),
+            ["read", "write:false", "adjust", "write:true"]
+        )
+    }
+
+    func testExplicitModesKeepTheirExistingRestoreBehavior() {
+        XCTAssertEqual(
+            adjustmentEvents(mode: .disableEnable, initialEnhancedUI: true),
+            ["read", "write:false", "adjust", "write:true"]
+        )
+        XCTAssertEqual(
+            adjustmentEvents(mode: .disableOnly, initialEnhancedUI: true),
+            ["read", "write:false", "adjust"]
+        )
+        XCTAssertEqual(
+            adjustmentEvents(mode: .frontmostDisable, initialEnhancedUI: true),
+            ["read", "write:false", "adjust"]
+        )
+    }
+
+    func testDisabledOrUnavailableEnhancedUIDoesNotWrite() {
+        XCTAssertEqual(
+            adjustmentEvents(mode: .automatic, initialEnhancedUI: false),
+            ["read", "adjust"]
+        )
+        XCTAssertEqual(
+            adjustmentEvents(mode: .automatic, initialEnhancedUI: nil),
+            ["read", "adjust"]
+        )
+    }
+
+    func testApplicationActivationPolicy() {
+        XCTAssertTrue(
+            EnhancedUI.automatic.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.google.Chrome",
+                builtInAssistiveTechnologyEnabled: false
+            )
+        )
+        XCTAssertFalse(
+            EnhancedUI.automatic.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.google.Chrome",
+                builtInAssistiveTechnologyEnabled: true
+            )
+        )
+        XCTAssertFalse(
+            EnhancedUI.automatic.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.apple.Safari",
+                builtInAssistiveTechnologyEnabled: false
+            )
+        )
+        XCTAssertFalse(
+            EnhancedUI.automatic.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: nil,
+                builtInAssistiveTechnologyEnabled: false
+            )
+        )
+        XCTAssertTrue(
+            EnhancedUI.frontmostDisable.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.apple.Safari",
+                builtInAssistiveTechnologyEnabled: true
+            )
+        )
+        XCTAssertFalse(
+            EnhancedUI.disableEnable.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.google.Chrome",
+                builtInAssistiveTechnologyEnabled: false
+            )
+        )
+        XCTAssertFalse(
+            EnhancedUI.disableOnly.disablesEnhancedUIOnApplicationActivation(
+                bundleIdentifier: "com.google.Chrome",
+                builtInAssistiveTechnologyEnabled: false
+            )
+        )
+    }
+
+    func testKnownChromiumBrowserBundleIdentifiers() {
+        let matchingBundleIdentifiers = [
+            "com.google.Chrome",
+            "com.google.Chrome.canary",
+            "org.chromium.Chromium",
+            "com.microsoft.edgemac",
+            "com.microsoft.edgemac.Beta",
+            "com.brave.Browser",
+            "com.brave.Browser.nightly",
+            "com.vivaldi.Vivaldi",
+            "com.operasoftware.Opera",
+            "com.operasoftware.OperaNext",
+            "com.operasoftware.OperaDeveloper",
+            "com.operasoftware.OperaNightly",
+            "com.operasoftware.OperaGX",
+            "com.operasoftware.OperaGXNext",
+            "com.operasoftware.OperaGXDeveloper",
+            "com.operasoftware.OperaGXNightly",
+            "company.thebrowser.Browser",
+            "company.thebrowser.dia",
+            "ai.perplexity.comet",
+            "com.openai.atlas"
+        ]
+        let nonmatchingBundleIdentifiers: [String?] = [
+            nil,
+            "com.apple.Safari",
+            "com.google.Chromecast",
+            "com.google.ChromeHelper",
+            "com.brave.BrowserHelper"
+        ]
+
+        for bundleIdentifier in matchingBundleIdentifiers {
+            XCTAssertTrue(EnhancedUI.isKnownChromiumBrowser(bundleIdentifier: bundleIdentifier))
+        }
+        for bundleIdentifier in nonmatchingBundleIdentifiers {
+            XCTAssertFalse(EnhancedUI.isKnownChromiumBrowser(bundleIdentifier: bundleIdentifier))
+        }
+    }
+
+    func testEnhancedUIPreferenceMigrationAndRawValues() {
+        let key = "RectangleTests.enhancedUI.\(UUID().uuidString)"
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+
+        let absentPreference = IntEnumDefault<EnhancedUI>(
+            key: key,
+            defaultValue: .automatic,
+            invalidValueFallback: .disableEnable
+        )
+        XCTAssertEqual(absentPreference.value.rawValue, 4)
+
+        UserDefaults.standard.set(0, forKey: key)
+        let legacyZeroPreference = IntEnumDefault<EnhancedUI>(
+            key: key,
+            defaultValue: .automatic,
+            invalidValueFallback: .disableEnable
+        )
+        XCTAssertEqual(legacyZeroPreference.value.rawValue, 1)
+
+        for rawValue in 1...4 {
+            UserDefaults.standard.set(rawValue, forKey: key)
+            let preference = IntEnumDefault<EnhancedUI>(
+                key: key,
+                defaultValue: .automatic,
+                invalidValueFallback: .disableEnable
+            )
+            XCTAssertEqual(preference.value.rawValue, rawValue)
+        }
+
+        legacyZeroPreference.load(from: CodableDefault(int: 0))
+        XCTAssertEqual(legacyZeroPreference.value.rawValue, 1)
     }
 }
 
@@ -1934,6 +2616,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testSecondRepeatedCornerShortcutBeginsCyclingImmediately() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
         Defaults.cornerCycleExpansionAxis.value = .horizontal
 
@@ -1947,6 +2630,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedCornerCyclingDoesNotReturnNoOpFrameWhenBaseMatchesCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
         Defaults.cornerCycleExpansionAxis.value = .vertical
 
@@ -1960,6 +2644,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedCornerCyclingRecognizesGapAdjustedCooperativeBoundary() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         Defaults.horizontalSplitRatio.value = CycleSize.twoThirds.percentValue
         Defaults.verticalSplitRatio.value = CycleSize.oneThird.percentValue
         Defaults.cornerCycleExpansionAxis.value = .vertical
@@ -2575,6 +3260,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedSideShortcutAdvancesWhenCurrentFrameMatchesSplitRatioCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
 
         let leftFrame = WindowCalculationFactory.leftHalfCalculation.calculateRect(params(for: .leftHalf)).rect
@@ -2585,6 +3271,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedTopShortcutAdvancesWhenCurrentFrameMatchesSplitRatioCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
 
         let topFrame = WindowCalculationFactory.topHalfCalculation.calculateRect(params(for: .topHalf)).rect
@@ -2675,6 +3362,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testHorizontalCornerShortcutCanCycleAfterCompatibleSideShortcut() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(50)
         Defaults.cornerCycleExpansionAxis.value = .horizontal
 
@@ -2691,6 +3379,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testVerticalCornerShortcutCanCycleAfterCompatibleSideShortcut() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(50)
         Defaults.cornerCycleExpansionAxis.value = .vertical
 
@@ -2791,125 +3480,6 @@ class HalfSplitCornerCalculationTests: XCTestCase {
         XCTAssertEqual(rect.height, expected.height, accuracy: 0.001, file: file, line: line)
     }
 }
-
-
-/// The cascade math itself. Asserting the resulting rect matters: an earlier
-/// version of this feature was certified by a test that only checked an
-/// eligibility flag, while the offset it enabled was a no-op for anyone
-/// running the default of no gaps.
-class OverlapOffsetGeometryTests: XCTestCase {
-
-    private let screen = CGRect(x: 0, y: 0, width: 1000, height: 800)
-    private let offset: CGFloat = 11
-
-    private func cascade(_ rect: CGRect, occupied: [CGPoint], maxCascade: Int = 1) -> CGRect {
-        OverlapOffsetGeometry.cascadedRect(rect,
-                                           occupiedTopLefts: occupied,
-                                           screenFrame: screen,
-                                           offset: offset,
-                                           maxCascade: maxCascade)
-    }
-
-    /// A maximized window with no gaps fills the visible frame, so there is
-    /// nowhere to shift it - and the caller skips the window scan entirely.
-    func testMaximizedWithoutGapsCannotOffset() {
-        let maximized = screen
-        XCTAssertFalse(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
-        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
-                       maximized)
-    }
-
-    /// Gaps larger than the offset leave room, so maximized windows cascade.
-    func testMaximizedWithGapsOffsets() {
-        let maximized = CGRect(x: 22, y: 22, width: 956, height: 756)
-        XCTAssertTrue(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
-        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
-                       CGRect(x: 33, y: 33, width: 956, height: 756))
-    }
-
-    /// Gaps smaller than the offset must not shift the window part way: it
-    /// would end up flush against the far edges, deleting the gaps there.
-    func testGapsSmallerThanOffsetDoNotOffset() {
-        let maximized = CGRect(x: 5, y: 5, width: 990, height: 790)
-        XCTAssertFalse(OverlapOffsetGeometry.canOffset(maximized, in: screen, by: offset))
-        XCTAssertEqual(cascade(maximized, occupied: [OverlapOffsetGeometry.topLeft(of: maximized)]),
-                       maximized)
-    }
-
-    /// A half with no gaps has room across but not up, and still offsets on
-    /// the axis that fits - the behavior shipped in v0.96.
-    func testHalfOffsetsOnTheAxisWithRoom() {
-        let leftHalf = CGRect(x: 0, y: 0, width: 500, height: 800)
-        XCTAssertEqual(cascade(leftHalf, occupied: [OverlapOffsetGeometry.topLeft(of: leftHalf)]),
-                       CGRect(x: 11, y: 0, width: 500, height: 800))
-    }
-
-    func testNoOverlapLeavesTheRectAlone() {
-        let leftHalf = CGRect(x: 0, y: 0, width: 500, height: 800)
-        XCTAssertEqual(cascade(leftHalf, occupied: [CGPoint(x: 500, y: 800)]), leftHalf)
-    }
-
-    func testCascadeStopsAtMaxCascade() {
-        let quarter = CGRect(x: 0, y: 0, width: 400, height: 400)
-        let occupied = [CGPoint(x: 0, y: 400), CGPoint(x: 11, y: 411), CGPoint(x: 22, y: 422)]
-        XCTAssertEqual(cascade(quarter, occupied: occupied, maxCascade: 1).origin,
-                       CGPoint(x: 11, y: 11))
-        XCTAssertEqual(cascade(quarter, occupied: occupied, maxCascade: 3).origin,
-                       CGPoint(x: 33, y: 33))
-    }
-
-    /// Matching is by top-left corner, so a smaller window landing on a larger
-    /// one at the same corner counts as an overlap - an eighth arriving on a
-    /// quarter. Both sit against the top of the screen here, so the window
-    /// offsets across but not up.
-    func testMatchesMixedSizesAtTheSameCorner() {
-        let eighth = CGRect(x: 0, y: 600, width: 250, height: 200)
-        let quarterTopLeft = OverlapOffsetGeometry.topLeft(of: CGRect(x: 0, y: 400, width: 500, height: 400))
-        XCTAssertEqual(quarterTopLeft, OverlapOffsetGeometry.topLeft(of: eighth))
-        XCTAssertEqual(cascade(eighth, occupied: [quarterTopLeft]),
-                       CGRect(x: 11, y: 600, width: 250, height: 200))
-    }
-
-    func testCoversScreen() {
-        XCTAssertTrue(OverlapOffsetGeometry.coversScreen(screen, screenFrame: screen))
-        XCTAssertTrue(OverlapOffsetGeometry.coversScreen(CGRect(x: 22, y: 22, width: 956, height: 756),
-                                                         screenFrame: screen))
-        XCTAssertFalse(OverlapOffsetGeometry.coversScreen(CGRect(x: 0, y: 0, width: 500, height: 800),
-                                                          screenFrame: screen))
-    }
-}
-
-/// Which actions are eligible for the overlap offset. `positionCycles` alone
-/// excluded maximize, so two maximized windows landed exactly on top of each
-/// other. Eligibility is only half of it - whether an eligible window actually
-/// moves is covered by OverlapOffsetGeometryTests.
-class OverlapOffsetEligibilityTests: XCTestCase {
-
-    func testMaximizeGetsTheOffset() {
-        XCTAssertTrue(WindowAction.maximize.overlapOffsetApplies)
-    }
-
-    func testGridPositionsGetTheOffset() {
-        for action in [WindowAction.leftHalf, .topLeft, .topLeftSixth,
-                       .topLeftNinth, .topLeftEighth, .topLeftTwelfth, .topLeftSixteenth] {
-            XCTAssertTrue(action.overlapOffsetApplies, "\(action) should get the overlap offset")
-        }
-    }
-
-    /// Actions that move or resize in place have no "landed on top of
-    /// something" notion, so offsetting them would just displace the window.
-    func testMovesAndResizesDoNotGetTheOffset() {
-        for action in [WindowAction.center, .restore, .moveLeft, .moveRight, .moveUp, .moveDown,
-                       .larger, .smaller, .nextDisplay, .previousDisplay,
-                       .almostMaximize, .maximizeHeight, .tileAll, .cascadeAll] {
-            XCTAssertFalse(action.overlapOffsetApplies, "\(action) should not get the overlap offset")
-        }
-    }
-}
-
-/// The stacked-window list is driven by an event tap, so it decides which
-/// keystrokes to take from the app underneath. Taking the wrong ones would
-/// break typing system-wide while the list is open.
 
 class OverlapOffsetGuardsTests: XCTestCase {
 
@@ -4046,3 +4616,352 @@ final class NextPrevDisplayMappingTests: XCTestCase {
         )
     }
 }
+
+class HalvesPreserveOtherAxisSizeTests: XCTestCase {
+
+    private var savedHalvesPreserveOtherAxisSize = false
+    private var savedGapSize: Float = 0
+    private var savedSkipGapTopEdge = false
+    private var savedHorizontalSplitRatio: Float = 50
+    private var savedVerticalSplitRatio: Float = 50
+    private var savedSubsequentExecutionMode: SubsequentExecutionMode = .resize
+    private var savedCycleSizesIsChanged = false
+    private var savedCooperativeCornerResize = false
+
+    private let visibleFrame = CGRect(x: 10, y: 20, width: 1200, height: 900)
+    // Ungapped rects that the half and quarter actions produce on `visibleFrame` at the default 50% split.
+    private let leftHalf = CGRect(x: 10, y: 20, width: 600, height: 900)
+    private let rightHalf = CGRect(x: 610, y: 20, width: 600, height: 900)
+    private let topHalf = CGRect(x: 10, y: 470, width: 1200, height: 450)
+    private let bottomHalf = CGRect(x: 10, y: 20, width: 1200, height: 450)
+    private let topLeftQuarter = CGRect(x: 10, y: 470, width: 600, height: 450)
+    private let topRightQuarter = CGRect(x: 610, y: 470, width: 600, height: 450)
+    private let bottomLeftQuarter = CGRect(x: 10, y: 20, width: 600, height: 450)
+    private let bottomRightQuarter = CGRect(x: 610, y: 20, width: 600, height: 450)
+
+    override func setUp() {
+        super.setUp()
+        savedHalvesPreserveOtherAxisSize = Defaults.halvesPreserveOtherAxisSize.enabled
+        savedGapSize = Defaults.gapSize.value
+        savedSkipGapTopEdge = Defaults.skipGapTopEdge.enabled
+        savedHorizontalSplitRatio = Defaults.horizontalSplitRatio.value
+        savedVerticalSplitRatio = Defaults.verticalSplitRatio.value
+        savedSubsequentExecutionMode = Defaults.subsequentExecutionMode.value
+        savedCycleSizesIsChanged = Defaults.cycleSizesIsChanged.enabled
+        savedCooperativeCornerResize = Defaults.cooperativeCornerResize.enabled
+        Defaults.halvesPreserveOtherAxisSize.enabled = true
+        Defaults.gapSize.value = 0
+        Defaults.skipGapTopEdge.enabled = false
+        Defaults.horizontalSplitRatio.value = 50
+        Defaults.verticalSplitRatio.value = 50
+        Defaults.subsequentExecutionMode.value = .resize
+        Defaults.cycleSizesIsChanged.enabled = false
+        Defaults.cooperativeCornerResize.enabled = false
+        ActiveSideSplitRatios.shared.resetAll()
+    }
+
+    override func tearDown() {
+        Defaults.halvesPreserveOtherAxisSize.enabled = savedHalvesPreserveOtherAxisSize
+        Defaults.gapSize.value = savedGapSize
+        Defaults.skipGapTopEdge.enabled = savedSkipGapTopEdge
+        Defaults.horizontalSplitRatio.value = savedHorizontalSplitRatio
+        Defaults.verticalSplitRatio.value = savedVerticalSplitRatio
+        Defaults.subsequentExecutionMode.value = savedSubsequentExecutionMode
+        Defaults.cycleSizesIsChanged.enabled = savedCycleSizesIsChanged
+        Defaults.cooperativeCornerResize.enabled = savedCooperativeCornerResize
+        ActiveSideSplitRatios.shared.resetAll()
+        super.tearDown()
+    }
+
+    // MARK: A half action keeps the other axis: Left + Top = top left quarter, in either order
+
+    func testTopHalfKeepsLeftHalfColumn() {
+        assertTiled(.topHalf, from: leftHalf, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testLeftHalfKeepsTopHalfRow() {
+        assertTiled(.leftHalf, from: topHalf, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testBottomHalfKeepsRightHalfColumn() {
+        assertTiled(.bottomHalf, from: rightHalf, gives: bottomRightQuarter, as: .bottomRight, subAction: .bottomRightQuarter)
+    }
+
+    func testRightHalfKeepsBottomHalfRow() {
+        assertTiled(.rightHalf, from: bottomHalf, gives: bottomRightQuarter, as: .bottomRight, subAction: .bottomRightQuarter)
+    }
+
+    func testTopHalfKeepsRightHalfColumn() {
+        assertTiled(.topHalf, from: rightHalf, gives: topRightQuarter, as: .topRight, subAction: .topRightQuarter)
+    }
+
+    func testBottomHalfKeepsLeftHalfColumn() {
+        assertTiled(.bottomHalf, from: leftHalf, gives: bottomLeftQuarter, as: .bottomLeft, subAction: .bottomLeftQuarter)
+    }
+
+    // MARK: The action for the opposite edge expands the window along that axis
+
+    func testBottomHalfExpandsTopLeftQuarterToLeftHalf() {
+        assertTiled(.bottomHalf, from: topLeftQuarter, gives: leftHalf, as: .leftHalf)
+    }
+
+    func testTopHalfExpandsBottomLeftQuarterToLeftHalf() {
+        assertTiled(.topHalf, from: bottomLeftQuarter, gives: leftHalf, as: .leftHalf)
+    }
+
+    func testRightHalfExpandsTopLeftQuarterToTopHalf() {
+        assertTiled(.rightHalf, from: topLeftQuarter, gives: topHalf, as: .topHalf)
+    }
+
+    func testLeftHalfExpandsBottomRightQuarterToBottomHalf() {
+        assertTiled(.leftHalf, from: bottomRightQuarter, gives: bottomHalf, as: .bottomHalf)
+    }
+
+    func testLeftHalfExpandsRightHalfToFullScreen() {
+        assertTiled(.leftHalf, from: rightHalf, gives: visibleFrame, as: .maximize)
+    }
+
+    func testTopHalfExpandsBottomHalfToFullScreen() {
+        assertTiled(.topHalf, from: bottomHalf, gives: visibleFrame, as: .maximize)
+    }
+
+    // MARK: The action for the edge a quarter is docked to cycles sizes along its own axis
+
+    func testLeftHalfCyclesWidthOfTopLeftQuarter() {
+        let twoThirdsWide = CGRect(x: 10, y: 470, width: 800, height: 450)
+        let oneThirdWide = CGRect(x: 10, y: 470, width: 400, height: 450)
+
+        assertTiled(.leftHalf, from: topLeftQuarter, gives: twoThirdsWide, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.leftHalf, from: twoThirdsWide, gives: oneThirdWide, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.leftHalf, from: oneThirdWide, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testRightHalfCyclesWidthOfBottomRightQuarterFromItsEdge() {
+        assertTiled(.rightHalf, from: bottomRightQuarter,
+                    gives: CGRect(x: 410, y: 20, width: 800, height: 450), as: .bottomRight, subAction: .bottomRightQuarter)
+    }
+
+    func testTopHalfCyclesHeightOfTopLeftQuarter() {
+        let twoThirdsHigh = CGRect(x: 10, y: 320, width: 600, height: 600)
+        let oneThirdHigh = CGRect(x: 10, y: 620, width: 600, height: 300)
+
+        assertTiled(.topHalf, from: topLeftQuarter, gives: twoThirdsHigh, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.topHalf, from: twoThirdsHigh, gives: oneThirdHigh, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.topHalf, from: oneThirdHigh, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testBottomHalfCyclesHeightOfBottomRightQuarterFromItsEdge() {
+        assertTiled(.bottomHalf, from: bottomRightQuarter,
+                    gives: CGRect(x: 610, y: 20, width: 600, height: 600), as: .bottomRight, subAction: .bottomRightQuarter)
+    }
+
+    func testCyclingInsideQuarterUsesSelectedCycleSizes() {
+        let savedSelectedCycleSizes = Defaults.selectedCycleSizes.value
+        defer { Defaults.selectedCycleSizes.value = savedSelectedCycleSizes }
+        Defaults.cycleSizesIsChanged.enabled = true
+        Defaults.selectedCycleSizes.value = [.twoThirds, .oneQuarter]
+
+        let twoThirdsWide = CGRect(x: 10, y: 470, width: 800, height: 450)
+        let oneQuarterWide = CGRect(x: 10, y: 470, width: 300, height: 450)
+
+        // One half is not selected: the cycle starts at the first selected size and never returns to one half.
+        assertTiled(.leftHalf, from: topLeftQuarter, gives: twoThirdsWide, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.leftHalf, from: twoThirdsWide, gives: oneQuarterWide, as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.leftHalf, from: oneQuarterWide, gives: twoThirdsWide, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testCyclingInsideQuarterStartsOverFromCustomSplitRatio() {
+        Defaults.horizontalSplitRatio.value = 60
+        let sixtyPercentWide = CGRect(x: 10, y: 470, width: 720, height: 450)
+
+        assertTiled(.leftHalf, from: sixtyPercentWide, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testCyclingInsideQuarterRecognizesGappedWindow() {
+        Defaults.gapSize.value = 20
+        let gappedTopLeftQuarter = GapCalculation.applyGaps(topLeftQuarter, dimension: .both, sharedEdges: [.right, .bottom], gapSize: 20, skipTopGap: false)
+
+        assertTiled(.leftHalf, from: gappedTopLeftQuarter,
+                    gives: CGRect(x: 10, y: 470, width: 800, height: 450), as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testQuarterStaysPutWhenRepeatedCommandsDoNotResize() {
+        for mode in [SubsequentExecutionMode.none, .acrossMonitor, .cycleMonitor] {
+            Defaults.subsequentExecutionMode.value = mode
+            assertTiled(.leftHalf, from: topLeftQuarter, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+            assertTiled(.topHalf, from: topLeftQuarter, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+        }
+    }
+
+    func testQuarterStaysPutWhenNoCycleSizesAreSelected() {
+        let savedSelectedCycleSizes = Defaults.selectedCycleSizes.value
+        defer { Defaults.selectedCycleSizes.value = savedSelectedCycleSizes }
+        Defaults.cycleSizesIsChanged.enabled = true
+        Defaults.selectedCycleSizes.value = []
+
+        assertTiled(.leftHalf, from: topLeftQuarter, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testRepeatedTopHalfInsideQuarterCyclesHeightWithoutHistory() {
+        let params = params(for: .topHalf, windowRect: topLeftQuarter,
+                            lastAction: RectangleAction(action: .topLeft, subAction: .topLeftQuarter, rect: topLeftQuarter, count: 5))
+
+        let result = WindowCalculationFactory.topHalfCalculation.calculateRect(params)
+
+        XCTAssertEqual(result.rect, CGRect(x: 10, y: 320, width: 600, height: 600))
+        XCTAssertEqual(result.resultingAction, .topLeft)
+        XCTAssertEqual(result.subAction, .topLeftQuarter)
+    }
+
+    // MARK: Plain halves and windows that are not tiled behave as without the feature
+
+    func testPlainHalvesRepeatAsUsual() {
+        XCTAssertNil(tiled(.leftHalf, from: leftHalf))
+        XCTAssertNil(tiled(.rightHalf, from: rightHalf))
+        XCTAssertNil(tiled(.topHalf, from: topHalf))
+        XCTAssertNil(tiled(.bottomHalf, from: bottomHalf))
+    }
+
+    func testRepeatedPlainTopHalfStillCyclesHeight() {
+        let params = params(for: .topHalf, windowRect: topHalf,
+                            lastAction: RectangleAction(action: .topHalf, subAction: nil, rect: topHalf, count: 1))
+
+        let result = WindowCalculationFactory.topHalfCalculation.calculateRect(params)
+
+        XCTAssertEqual(result.rect, CGRect(x: 10, y: 320, width: 1200, height: 600))
+    }
+
+    func testUntiledWindowsAreNotAffected() {
+        let floating = CGRect(x: 300, y: 100, width: 700, height: 500)
+        let centeredColumn = CGRect(x: 310, y: 20, width: 600, height: 900)
+
+        for action in [WindowAction.leftHalf, .rightHalf, .topHalf, .bottomHalf] {
+            XCTAssertNil(tiled(action, from: floating), "\(action)")
+            XCTAssertNil(tiled(action, from: visibleFrame), "\(action)")
+        }
+        XCTAssertNil(tiled(.topHalf, from: centeredColumn))
+    }
+
+    func testTopHalfCalculationFallsBackToDefaultBehaviorForUntiledWindows() {
+        let result = WindowCalculationFactory.topHalfCalculation.calculateRect(params(for: .topHalf, windowRect: CGRect(x: 300, y: 100, width: 700, height: 500)))
+
+        XCTAssertEqual(result.rect, topHalf)
+        XCTAssertNil(result.resultingAction)
+        XCTAssertNil(result.subAction)
+    }
+
+    func testTopHalfCalculationTilesWhenEnabled() {
+        let result = WindowCalculationFactory.topHalfCalculation.calculateRect(params(for: .topHalf, windowRect: leftHalf))
+
+        XCTAssertEqual(result.rect, topLeftQuarter)
+        XCTAssertEqual(result.resultingAction, .topLeft)
+        XCTAssertEqual(result.subAction, .topLeftQuarter)
+    }
+
+    func testBottomHalfCalculationTilesWhenEnabled() {
+        let result = WindowCalculationFactory.bottomHalfCalculation.calculateRect(params(for: .bottomHalf, windowRect: topLeftQuarter))
+
+        XCTAssertEqual(result.rect, leftHalf)
+        XCTAssertEqual(result.resultingAction, .leftHalf)
+    }
+
+    func testDisabledFeatureKeepsFullWidthTopHalf() {
+        Defaults.halvesPreserveOtherAxisSize.enabled = false
+
+        let result = WindowCalculationFactory.topHalfCalculation.calculateRect(params(for: .topHalf, windowRect: leftHalf))
+
+        XCTAssertEqual(result.rect, topHalf)
+        XCTAssertNil(result.resultingAction)
+        XCTAssertNil(result.subAction)
+    }
+
+    // MARK: Columns and rows other than exactly one half
+
+    func testTopHalfKeepsCycledTwoThirdsColumn() {
+        assertTiled(.topHalf, from: CGRect(x: 10, y: 20, width: 800, height: 900),
+                    gives: CGRect(x: 10, y: 470, width: 800, height: 450), as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testBottomHalfExpandsTwoThirdsWideTopLeftQuarterToTwoThirdsColumn() {
+        assertTiled(.bottomHalf, from: CGRect(x: 10, y: 470, width: 800, height: 450),
+                    gives: CGRect(x: 10, y: 20, width: 800, height: 900), as: .leftHalf)
+    }
+
+    func testLeftHalfKeepsCycledTopThirdRow() {
+        assertTiled(.leftHalf, from: CGRect(x: 10, y: 620, width: 1200, height: 300),
+                    gives: CGRect(x: 10, y: 620, width: 600, height: 300), as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testTopHalfKeepsRightThirdColumn() {
+        assertTiled(.topHalf, from: CGRect(x: 810, y: 20, width: 400, height: 900),
+                    gives: CGRect(x: 810, y: 470, width: 400, height: 450), as: .topRight, subAction: .topRightQuarter)
+    }
+
+    func testCustomSplitRatioIsUsedForRecognitionAndResults() {
+        Defaults.horizontalSplitRatio.value = 60
+
+        assertTiled(.topHalf, from: CGRect(x: 10, y: 20, width: 720, height: 900),
+                    gives: CGRect(x: 10, y: 470, width: 720, height: 450), as: .topLeft, subAction: .topLeftQuarter)
+        assertTiled(.topHalf, from: CGRect(x: 730, y: 20, width: 480, height: 900),
+                    gives: CGRect(x: 730, y: 470, width: 480, height: 450), as: .topRight, subAction: .topRightQuarter)
+        assertTiled(.leftHalf, from: topHalf,
+                    gives: CGRect(x: 10, y: 470, width: 720, height: 450), as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    // MARK: Gaps and tolerance
+
+    func testRecognizesGappedColumnAndReturnsUngappedRect() {
+        Defaults.gapSize.value = 20
+        // Left half with gaps applied by WindowManager: inset 20 on each side, half a gap back on the shared right edge.
+        let gappedLeftHalf = CGRect(x: 30, y: 40, width: 570, height: 860)
+
+        assertTiled(.topHalf, from: gappedLeftHalf, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testRecognizesGappedRowWithSkippedTopGap() {
+        Defaults.gapSize.value = 20
+        Defaults.skipGapTopEdge.enabled = true
+        let gappedTopHalf = GapCalculation.applyGaps(topHalf, dimension: .both, sharedEdges: .bottom, gapSize: 20, skipTopGap: true)
+
+        assertTiled(.leftHalf, from: gappedTopHalf, gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testToleratesWindowsThatCannotTakeTheExactSize() {
+        assertTiled(.topHalf, from: CGRect(x: 10, y: 20, width: 594, height: 900),
+                    gives: topLeftQuarter, as: .topLeft, subAction: .topLeftQuarter)
+    }
+
+    func testDoesNotMatchWindowsFarFromAnyColumn() {
+        XCTAssertNil(tiled(.topHalf, from: CGRect(x: 10, y: 20, width: 560, height: 900)))
+    }
+
+    // MARK: Helpers
+
+    private func tiled(_ action: WindowAction, from windowRect: CGRect) -> RectResult? {
+        HalvesPreserveOtherAxisSize.rect(for: params(for: action, windowRect: windowRect))
+    }
+
+    private func assertTiled(_ action: WindowAction,
+                             from windowRect: CGRect,
+                             gives expectedRect: CGRect,
+                             as expectedAction: WindowAction,
+                             subAction expectedSubAction: SubWindowAction? = nil,
+                             file: StaticString = #filePath,
+                             line: UInt = #line) {
+        guard let result = tiled(action, from: windowRect) else {
+            XCTFail("\(action) from \(windowRect) fell back to the default behavior", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(result.rect, expectedRect, file: file, line: line)
+        XCTAssertEqual(result.resultingAction, expectedAction, file: file, line: line)
+        XCTAssertEqual(result.subAction, expectedSubAction, file: file, line: line)
+    }
+
+    private func params(for action: WindowAction, windowRect: CGRect, lastAction: RectangleAction? = nil) -> RectCalculationParameters {
+        RectCalculationParameters(window: Window(id: 1, rect: windowRect),
+                                  visibleFrameOfScreen: visibleFrame,
+                                  action: action,
+                                  lastAction: lastAction)
+    }
+}
+
