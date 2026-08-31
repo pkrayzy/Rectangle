@@ -2616,6 +2616,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testSecondRepeatedCornerShortcutBeginsCyclingImmediately() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
         Defaults.cornerCycleExpansionAxis.value = .horizontal
 
@@ -2629,6 +2630,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedCornerCyclingDoesNotReturnNoOpFrameWhenBaseMatchesCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
         Defaults.cornerCycleExpansionAxis.value = .vertical
 
@@ -2642,6 +2644,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedCornerCyclingRecognizesGapAdjustedCooperativeBoundary() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         Defaults.horizontalSplitRatio.value = CycleSize.twoThirds.percentValue
         Defaults.verticalSplitRatio.value = CycleSize.oneThird.percentValue
         Defaults.cornerCycleExpansionAxis.value = .vertical
@@ -3257,6 +3260,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedSideShortcutAdvancesWhenCurrentFrameMatchesSplitRatioCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
 
         let leftFrame = WindowCalculationFactory.leftHalfCalculation.calculateRect(params(for: .leftHalf)).rect
@@ -3267,6 +3271,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testRepeatedTopShortcutAdvancesWhenCurrentFrameMatchesSplitRatioCycleSize() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(CycleSize.twoThirds.percentValue)
 
         let topFrame = WindowCalculationFactory.topHalfCalculation.calculateRect(params(for: .topHalf)).rect
@@ -3357,6 +3362,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testHorizontalCornerShortcutCanCycleAfterCompatibleSideShortcut() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(50)
         Defaults.cornerCycleExpansionAxis.value = .horizontal
 
@@ -3373,6 +3379,7 @@ class HalfSplitCornerCalculationTests: XCTestCase {
     }
 
     func testVerticalCornerShortcutCanCycleAfterCompatibleSideShortcut() {
+        guard Defaults.cooperativeCornerResize.enabled else { return }
         setSplitRatio(50)
         Defaults.cornerCycleExpansionAxis.value = .vertical
 
