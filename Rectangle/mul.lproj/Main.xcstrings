@@ -38909,9 +38909,6 @@
     "Show stacked window list on hover" : {
 
     },
-    "Toggle stacked window list" : {
-
-    },
     "Side Split Ratio" : {
       "localizations" : {
         "ko" : {
@@ -41494,6 +41491,12 @@
           }
         }
       }
+    },
+    "Toggle stacked window badge" : {
+
+    },
+    "Toggle stacked window list" : {
+
     },
     "Toggle Todo" : {
 
