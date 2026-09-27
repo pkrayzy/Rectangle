@@ -63,7 +63,7 @@ enum WindowAnimationProfile {
 
 /// A finite trajectory can be replaced without estimating velocity from rounded AX frames.
 struct WindowKeyboardMotion {
-    static let duration: TimeInterval = 0.22
+    static let duration: TimeInterval = 0.15
 
     struct Sample {
         let frame: CGRect
