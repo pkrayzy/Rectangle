@@ -48,9 +48,16 @@ enum CycleSize: Int, CaseIterable {
     }
 }
 
-enum CornerCycleExpansionAxis: Int {
+enum CornerCycleExpansionAxis: Int, CaseIterable {
     case horizontal = 0
     case vertical = 1
+    
+    var title: String {
+        switch self {
+        case .horizontal: return String(localized: "Horizontally")
+        case .vertical: return String(localized: "Vertically")
+        }
+    }
 }
 
 extension CycleSize {
@@ -65,7 +72,7 @@ extension CycleSize {
         case .twoThirds:
             "⅗"
         case .oneHalf:
-            "½"
+            String(localized: "½")
         case .oneThird:
             "⅖"
         case .oneQuarter:

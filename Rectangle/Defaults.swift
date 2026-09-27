@@ -8,10 +8,14 @@ class Defaults {
     static let hideMenuBarIcon = BoolDefault(key: "hideMenubarIcon")
     static let alternateDefaultShortcuts = BoolDefault(key: "alternateDefaultShortcuts") // switch to magnet defaults
     static let subsequentExecutionMode = SubsequentExecutionDefault()
+    static let tileColumnsMaxWindows = PositiveIntDefault(key: "tileColumnsMaxWindows", defaultValue: 3)
+    static let tileRowsMaxWindows = PositiveIntDefault(key: "tileRowsMaxWindows", defaultValue: 3)
     static let selectedCycleSizes = CycleSizesDefault()
     static let cycleSizesIsChanged = BoolDefault(key: "cycleSizesIsChanged")
     static let cornerCycleExpansionAxis = IntEnumDefault<CornerCycleExpansionAxis>(key: "cornerCycleExpansionAxis", defaultValue: .horizontal)
     static let cooperativeCornerResize = BoolDefault(key: "cooperativeCornerResize")
+    static let experimentalWindowAnimations = BoolDefault(key: "experimentalWindowAnimations")
+    static let showMinimumWindowSizeWarning = OptionalBoolDefault(key: "showMinimumWindowSizeWarning")
     static let allowAnyShortcut = BoolDefault(key: "allowAnyShortcut")
     static let windowSnapping = OptionalBoolDefault(key: "windowSnapping")
     static let almostMaximizeHeight = FloatDefault(key: "almostMaximizeHeight")
@@ -25,6 +29,7 @@ class Defaults {
     static let centeredDirectionalMove = OptionalBoolDefault(key: "centeredDirectionalMove")
     static let resizeOnDirectionalMove = BoolDefault(key: "resizeOnDirectionalMove")
     static let halvesPreserveOtherAxisSize = BoolDefault(key: "halvesPreserveOtherAxisSize")
+    static let repeatedMaximizeRestoresPrevious = BoolDefault(key: "repeatedMaximizeRestoresPrevious")
     static let moveFixedSizeToEdge = IntEnumDefault<EdgeAlignment>(key: "moveFixedSizeToEdge", defaultValue: .edgesAndCorners)
     static let ignoredSnapAreas = IntDefault(key: "ignoredSnapAreas")
     static let traverseSingleScreen = OptionalBoolDefault(key: "traverseSingleScreen")
@@ -50,10 +55,19 @@ class Defaults {
     static let showAllActionsInMenu = OptionalBoolDefault(key: "showAllActionsInMenu")
     static let showAdditionalSizesInMenu = OptionalBoolDefault(key: "showAdditionalSizesInMenu")
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
-    static let footprintAlpha = FloatDefault(key: "footprintAlpha", defaultValue: 0.3)
+    static let footprintAlpha = DoubleDefault(key: "footprintAlpha")
+    static var effectiveFootprintAlpha: Double {
+        if UserDefaults.standard.object(forKey: footprintAlpha.key) == nil {
+            return footprintBlur.enabled ? 0 : 0.3
+        }
+        return footprintAlpha.value
+    }
     static let footprintBorderWidth = FloatDefault(key: "footprintBorderWidth", defaultValue: 2)
     static let footprintFade = OptionalBoolDefault(key: "footprintFade")
     static let footprintColor = JSONDefault<CodableColor>(key: "footprintColor")
+    static let footprintBlur = BoolDefault(key: "footprintBlur")
+    static let blurAppearance = IntEnumDefault<BlurAppearance>(key: "blurAppearance", defaultValue: .system)
+
     static let SUEnableAutomaticChecks = BoolDefault(key: "SUEnableAutomaticChecks")
     static let todo = OptionalBoolDefault(key: "todo")
     static let todoMode = BoolDefault(key: "todoMode")
@@ -63,6 +77,7 @@ class Defaults {
     static let todoSidebarSide = IntEnumDefault<TodoSidebarSide>(key: "todoSidebarSide", defaultValue: .right)
     static let snapModifiers = IntDefault(key: "snapModifiers")
     static let attemptMatchOnNextPrevDisplay = OptionalBoolDefault(key: "attemptMatchOnNextPrevDisplay")
+    static let centerAcrossDisplays = OptionalBoolDefault(key: "centerAcrossDisplays")
     static let altThirdCycle = OptionalBoolDefault(key: "altThirdCycle")
     static let centerHalfCycles = OptionalBoolDefault(key: "centerHalfCycles")
     static let cyclingOverlapOffset = OptionalBoolDefault(key: "cyclingOverlapOffset")
@@ -106,20 +121,25 @@ class Defaults {
     static let ignoreDragSnapToo = OptionalBoolDefault(key: "ignoreDragSnapToo")
     static let systemWideMouseDown = OptionalBoolDefault(key: "systemWideMouseDown")
     static let systemWideMouseDownApps = JSONDefault<Set<String>>(key:"systemWideMouseDownApps", defaultValue: Set<String>(["org.languagetool.desktop", "com.microsoft.teams2"]))
+    static let directAnimationNativeResizeApps = JSONDefault<Set<String>>(key: "directAnimationNativeResizeApps", defaultValue: Set<String>(["com.colliderli.iina"]))
     static let internalTilingNotified = BoolDefault(key: "internalTilingNotified")
     static let screensOrderedByX = IntEnumDefault<ScreenOrdering>(key: "screensOrderedByX", defaultValue: .yThenMinX)
     static let combinedDisplayMode = OptionalBoolDefault(key: "combinedDisplayMode")
     static let greenButtonOverride = BoolDefault(key: "greenButtonOverride")
+    static let wasWelcomeDisplayed = BoolDefault(key: "wasWelcomeDisplayed")
     static var array: [Default] = [
         launchOnLogin,
         disabledApps,
         hideMenuBarIcon,
         alternateDefaultShortcuts,
         subsequentExecutionMode,
+        tileColumnsMaxWindows,
+        tileRowsMaxWindows,
         selectedCycleSizes,
         cycleSizesIsChanged,
         cornerCycleExpansionAxis,
         cooperativeCornerResize,
+        experimentalWindowAnimations,
         allowAnyShortcut,
         windowSnapping,
         almostMaximizeHeight,
@@ -133,6 +153,7 @@ class Defaults {
         centeredDirectionalMove,
         resizeOnDirectionalMove,
         halvesPreserveOtherAxisSize,
+        repeatedMaximizeRestoresPrevious,
         ignoredSnapAreas,
         traverseSingleScreen,
         minimumWindowWidth,
@@ -156,6 +177,8 @@ class Defaults {
         footprintBorderWidth,
         footprintFade,
         footprintColor,
+        footprintBlur,
+        blurAppearance,
         SUEnableAutomaticChecks,
         todo,
         todoMode,
@@ -165,6 +188,7 @@ class Defaults {
         todoSidebarSide,
         snapModifiers,
         attemptMatchOnNextPrevDisplay,
+        centerAcrossDisplays,
         altThirdCycle,
         centerHalfCycles,
         fullIgnoreBundleIds,
@@ -199,6 +223,7 @@ class Defaults {
         ignoreDragSnapToo,
         systemWideMouseDown,
         systemWideMouseDownApps,
+        directAnimationNativeResizeApps,
         screensOrderedByX,
         showAdditionalSizesInMenu,
         cyclingOverlapOffset,
@@ -412,6 +437,41 @@ class DoubleDefault: Default {
     }
 }
 
+class PositiveIntDefault: Default {
+    let key: String
+    private let userDefaults: UserDefaults
+    private var storedValue: Int
+
+    var value: Int {
+        get { storedValue }
+        set {
+            storedValue = max(1, newValue)
+            userDefaults.set(storedValue, forKey: key)
+        }
+    }
+
+    init(key: String, defaultValue: Int, userDefaults: UserDefaults = .standard) {
+        precondition(defaultValue > 0)
+        self.key = key
+        self.userDefaults = userDefaults
+        if let savedValue = userDefaults.object(forKey: key) {
+            storedValue = max(1, savedValue as? Int ?? 1)
+        } else {
+            storedValue = defaultValue
+        }
+    }
+
+    func load(from codable: CodableDefault) {
+        if let int = codable.int {
+            value = int
+        }
+    }
+
+    func toCodable() -> CodableDefault {
+        CodableDefault(int: value)
+    }
+}
+
 class IntDefault: Default {
     public private(set) var key: String
     private var initialized = false
@@ -555,3 +615,18 @@ struct CodableColor : Codable {
         self.alpha = nsColor.alphaComponent
     }
 }
+
+enum BlurAppearance: Int, CaseIterable {
+    case system = 0
+    case light = 1
+    case dark = 2
+
+    var appearance: NSAppearance? {
+        switch self {
+        case .system: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
+        }
+    }
+}
+

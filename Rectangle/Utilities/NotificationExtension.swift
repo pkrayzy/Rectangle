@@ -5,6 +5,8 @@ import Cocoa
 extension Notification.Name {
   
     static let configImported = Notification.Name("configImported")
+    static let windowAnimationPreferencesChanged = Notification.Name("windowAnimationPreferencesChanged")
+    static let windowActionCompleted = Notification.Name("windowActionCompleted")
     static let windowSnapping = Notification.Name("windowSnapping")
     static let frontAppChanged = Notification.Name("frontAppChanged")
     static let allowAnyShortcut = Notification.Name("allowAnyShortcutToggle")
@@ -20,6 +22,7 @@ extension Notification.Name {
     static let showAdditionalSizesInMenuChanged = Notification.Name("showAdditionalSizesInMenuChanged")
     static let shortcutRecording = Notification.Name("shortcutRecording")
     static let stackBadgeChanged = Notification.Name("stackBadgeChanged")
+    static let snapAreaSettingsNeedsResize = Notification.Name("snapAreaSettingsNeedsResize")
 
     func post(
         center: NotificationCenter = NotificationCenter.default,

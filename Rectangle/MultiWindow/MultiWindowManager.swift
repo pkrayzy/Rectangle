@@ -4,6 +4,20 @@ import Cocoa
 import MASShortcut
 
 class MultiWindowManager {
+    typealias BandDirection = GridTiling.Direction
+    typealias BandConstraint = GridTiling.Constraint
+    typealias BackingPixelBounds = GridTiling.Bounds
+
+    private static var gridStates = [NSScreen: GridTiling.State<AccessibilityElement>]()
+
+    struct TilingWindow {
+        let element: AccessibilityElement
+        let frame: CGRect
+        let windowId: CGWindowID?
+        let pid: pid_t?
+        let isFocused: Bool
+    }
+
     static func execute(parameters: ExecutionParameters) -> Bool {
         // TODO: Protocol and factory for all multi-window positioning algorithms
         switch parameters.action {
@@ -11,7 +25,13 @@ class MultiWindowManager {
             ReverseAllManager.reverseAll(windowElement: parameters.windowElement)
             return true
         case .tileAll:
-            tileAllWindowsOnScreen(windowElement: parameters.windowElement)
+            tileAllWindowsOnScreen()
+            return true
+        case .tileRows:
+            tileWindowsInBands(.rows)
+            return true
+        case .tileColumns:
+            tileWindowsInBands(.columns)
             return true
         case .cascadeAll:
             cascadeAllWindowsOnScreen(windowElement: parameters.windowElement)
@@ -38,9 +58,26 @@ class MultiWindowManager {
             return nil
         }
 
-        let currentScreen = screens.currentScreen
+        return windowsOnScreen(screens: screens, windows: AccessibilityElement.getAllWindowElements(),
+                               sortByPID: sortByPID,
+                               screenFor: { screenDetection.detectScreens(using: $0)?.currentScreen })
+    }
 
-        var windows = AccessibilityElement.getAllWindowElements()
+    private static func isActiveTodoWindow(_ window: AccessibilityElement) -> Bool {
+        Defaults.todo.userEnabled && TodoManager.isTodoWindow(window)
+    }
+
+    static func windowsOnScreen(screens: UsableScreens, windows: [AccessibilityElement],
+                                focusedWindow: AccessibilityElement? = nil,
+                                sortByPID: Bool = false, combineScreens: Bool = false,
+                                isActiveTodoWindow: (AccessibilityElement) -> Bool = MultiWindowManager.isActiveTodoWindow,
+                                screenFor: (AccessibilityElement) -> NSScreen?) -> (screens: UsableScreens, windows: [AccessibilityElement]) {
+        var windows = windows
+        // Focus is known even when CG omits its app, but still obeys the display
+        // and Todo exclusions applied to every other candidate.
+        if let focusedWindow, !windows.contains(focusedWindow) {
+            windows.append(focusedWindow)
+        }
         if sortByPID {
             windows.sort(by: { (w1: AccessibilityElement, w2: AccessibilityElement) -> Bool in
                 w1.pid ?? pid_t(0) > w2.pid ?? pid_t(0)
@@ -49,9 +86,8 @@ class MultiWindowManager {
 
         var actualWindows = [AccessibilityElement]()
         for w in windows {
-            if Defaults.todo.userEnabled, TodoManager.isTodoWindow(w) { continue }
-            let screen = screenDetection.detectScreens(using: w)?.currentScreen
-            if screen == currentScreen,
+            if isActiveTodoWindow(w) { continue }
+            if combineScreens || screenFor(w) == screens.currentScreen,
                w.isWindow == true,
                w.isSheet != true,
                w.isMinimized != true,
@@ -65,12 +101,223 @@ class MultiWindowManager {
         return (screens, actualWindows)
     }
 
-    static func tileAllWindowsOnScreen(windowElement: AccessibilityElement? = nil) {
-        guard let (screens, windows) = allWindowsOnScreen(windowElement: windowElement, sortByPID: true) else {
-            return
+    static func tilingContext(focusedWindow: AccessibilityElement?,
+                              screenDetection: ScreenDetection) -> (focusedWindow: AccessibilityElement?, screens: UsableScreens)? {
+        let eligibleFocus: AccessibilityElement?
+        if let focusedWindow,
+              focusedWindow.isWindow == true,
+              focusedWindow.isSheet != true,
+              focusedWindow.isMinimized != true,
+              focusedWindow.isHidden != true,
+              focusedWindow.isSystemDialog != true,
+              !focusedWindow.frame.isNull {
+            eligibleFocus = focusedWindow
+        } else {
+            eligibleFocus = nil
         }
 
-        let screenFrame = screens.currentScreen.adjustedVisibleFrame().screenFlipped
+        let screens: UsableScreens?
+        if let eligibleFocus {
+            screens = screenDetection.detectScreens(using: eligibleFocus)
+        } else {
+            screens = screenDetection.detectScreensAtCursor()
+        }
+
+        return screens.map { (eligibleFocus, $0) }
+    }
+
+    private static func tileWindowsInBands(_ direction: BandDirection) {
+        let screenDetection = ScreenDetection()
+        guard let context = tilingContext(focusedWindow: AccessibilityElement.getFocusedWindowElement(),
+                                          screenDetection: screenDetection) else { return }
+
+        // Reuse this new on-screen snapshot for AX app discovery and for Space
+        // membership, even when another tiling action just moved windows.
+        let visibleInfo = WindowUtil.getWindowList(forceRefresh: true)
+        let windows = windowsOnScreen(screens: context.screens,
+                                      windows: AccessibilityElement.getAllWindowElements(from: visibleInfo),
+                                      focusedWindow: context.focusedWindow,
+                                      combineScreens: !NSScreen.screensHaveSeparateSpaces && Defaults.combinedDisplayMode.userEnabled,
+                                      screenFor: { screenDetection.detectScreens(using: $0)?.currentScreen }).windows
+
+        tileWindowsInBands(direction, focusedWindow: context.focusedWindow, windows: windows,
+                           visibleWindowInfo: visibleInfo, screen: context.screens.currentScreen,
+                           visibleFrame: context.screens.currentScreen.adjustedVisibleFrame())
+    }
+
+    static func tileWindowsInBands(_ direction: BandDirection, focusedWindow: AccessibilityElement?,
+                                    windows: [AccessibilityElement], visibleWindowInfo: [WindowInfo],
+                                    screen: NSScreen, visibleFrame: CGRect) {
+        guard focusedWindow?.frame.screenFlipped.intersects(screen.frame) != false else { return }
+
+        let snapshots = windows.compactMap { window -> TilingWindow? in
+            let frame = window.frame
+            guard !frame.isNull else { return nil }
+            return TilingWindow(element: window,
+                                frame: frame,
+                                windowId: window.windowId,
+                                pid: window.pid,
+                                isFocused: window == focusedWindow)
+        }
+
+        let currentSpaceWindows = selectCurrentSpaceWindows(snapshots, visibleWindowInfo: visibleWindowInfo,
+                                                           frameTolerance: 1 / max(1, screen.backingScaleFactor))
+        let ordered = orderForBandTiling(currentSpaceWindows, direction: direction)
+        guard !ordered.isEmpty else { return }
+
+        let bounds = BackingPixelBounds(screen.convertRectToBacking(visibleFrame))
+        guard bounds.extent(.rows) > 0, bounds.extent(.columns) > 0 else { return }
+
+        let constraints = ordered.map { candidate -> GridTiling.WindowConstraints in
+            let isResizable = candidate.element.isResizable()
+            let size = isResizable ? (candidate.element.minimumSize ?? .zero) : candidate.frame.size
+            let backingSize = screen.convertRectToBacking(CGRect(origin: .zero, size: size)).size
+            func constraint(_ size: CGFloat, maximum: Int) -> GridTiling.Constraint {
+                let pixels = max(0, Int(isResizable ? ceil(size) : size.rounded()))
+                return isResizable ? .resizable(minimum: pixels, maximum: maximum) : .fixed(pixels)
+            }
+            return GridTiling.WindowConstraints(width: constraint(backingSize.width, maximum: bounds.extent(.columns)),
+                                                height: constraint(backingSize.height, maximum: bounds.extent(.rows)))
+        }
+
+        let limit = direction == .rows ? Defaults.tileRowsMaxWindows.value : Defaults.tileColumnsMaxWindows.value
+        let observed = ordered.map { BackingPixelBounds(screen.convertRectToBacking($0.frame.screenFlipped)).rect }
+        gridStates[screen] = GridTiling.perform(windows: ordered.map(\.element), observedFrames: observed,
+                                               bounds: bounds, direction: direction, limit: limit,
+                                               constraints: constraints, previous: gridStates[screen]) { index, frame in
+            let window = ordered[index].element
+            window.setFrame(screen.convertRectFromBacking(frame).screenFlipped)
+            let achieved = window.frame
+            return achieved.isNull ? .null : BackingPixelBounds(screen.convertRectToBacking(achieved.screenFlipped)).rect
+        }
+    }
+
+    /// On-screen CG records supply current-Space evidence. Raw IDs are exact;
+    /// ID-less windows enter only if every maximum one-to-one PID/frame match
+    /// uses them. Focus is independently known but still competes for CG evidence.
+    /// Identical PID/frame records without IDs cannot prove actual identity.
+    static func selectCurrentSpaceWindows(_ snapshots: [TilingWindow], visibleWindowInfo: [WindowInfo],
+                                          frameTolerance: CGFloat = 1) -> [TilingWindow] {
+        let visibleIds = Set(visibleWindowInfo.map(\.id))
+        let identifiedIds = Set(snapshots.compactMap(\.windowId)).intersection(visibleIds)
+        var seenVisibleIds = Set<CGWindowID>()
+        let unmatchedVisible = visibleWindowInfo.filter {
+            !identifiedIds.contains($0.id) && seenVisibleIds.insert($0.id).inserted
+        }
+        let idlessIndices = snapshots.indices.filter {
+            snapshots[$0].windowId == nil && snapshots[$0].pid != nil
+        }
+        let matches = idlessIndices.map { index in
+            unmatchedVisible.indices.filter { cgIndex in
+                let info = unmatchedVisible[cgIndex]
+                return info.pid == snapshots[index].pid
+                    && framesMatch(info.frame, snapshots[index].frame, tolerance: frameTolerance)
+            }
+        }
+
+        // -1 marks a vertex that has no partner in the current matching.
+        var matchedAXForCG = [Int](repeating: -1, count: unmatchedVisible.count)
+        func augment(_ ax: Int, seenCG: inout [Bool], matchedAXForCG: inout [Int]) -> Bool {
+            for cg in matches[ax] {
+                if seenCG[cg] {
+                    continue
+                } else {
+                    seenCG[cg] = true
+                    let previousAX = matchedAXForCG[cg]
+                    if previousAX == -1 || augment(previousAX, seenCG: &seenCG, matchedAXForCG: &matchedAXForCG) {
+                        matchedAXForCG[cg] = ax
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+        for ax in matches.indices {
+            var seenCG = [Bool](repeating: false, count: unmatchedVisible.count)
+            _ = augment(ax, seenCG: &seenCG, matchedAXForCG: &matchedAXForCG)
+        }
+
+        var matchedCGForAX = [Int](repeating: -1, count: matches.count)
+        for (cg, ax) in matchedAXForCG.enumerated() where ax >= 0 {
+            matchedCGForAX[ax] = cg
+        }
+
+        // Alternating paths from unmatched AX windows reach every AX window
+        // that another equally large assignment could leave unmatched.
+        var optionalAX = [Bool](repeating: false, count: matches.count)
+        var queue = matches.indices.filter { matchedCGForAX[$0] == -1 }
+        for ax in queue {
+            optionalAX[ax] = true
+        }
+        var next = 0
+        while next < queue.count {
+            let ax = queue[next]
+            next += 1
+            for cg in matches[ax] where cg != matchedCGForAX[ax] {
+                let otherAX = matchedAXForCG[cg]
+                if otherAX >= 0 && !optionalAX[otherAX] {
+                    optionalAX[otherAX] = true
+                    queue.append(otherAX)
+                }
+            }
+        }
+
+        var established = [Bool](repeating: false, count: snapshots.count)
+        for ax in matches.indices where matchedCGForAX[ax] >= 0 && !optionalAX[ax] {
+            established[idlessIndices[ax]] = true
+        }
+        return snapshots.enumerated().compactMap { index, candidate in
+            if candidate.isFocused {
+                return candidate
+            } else if let windowId = candidate.windowId {
+                return visibleIds.contains(windowId) ? candidate : nil
+            } else if established[index] {
+                return candidate
+            } else {
+                return nil
+            }
+        }
+    }
+
+    private static func framesMatch(_ first: CGRect, _ second: CGRect, tolerance: CGFloat) -> Bool {
+        let tolerance = max(0, tolerance)
+        // AX and CG can round position and size independently. Comparing far
+        // edges would add those errors and reject an otherwise matching frame.
+        return abs(first.minX - second.minX) <= tolerance
+            && abs(first.minY - second.minY) <= tolerance
+            && abs(first.width - second.width) <= tolerance
+            && abs(first.height - second.height) <= tolerance
+    }
+
+    static func orderForBandTiling(_ windows: [TilingWindow], direction: BandDirection) -> [TilingWindow] {
+        windows.sorted { first, second in
+            let firstPrimary = direction == .rows ? first.frame.minY : first.frame.minX
+            let secondPrimary = direction == .rows ? second.frame.minY : second.frame.minX
+            let firstSecondary = direction == .rows ? first.frame.minX : first.frame.minY
+            let secondSecondary = direction == .rows ? second.frame.minX : second.frame.minY
+            if firstPrimary != secondPrimary {
+                return firstPrimary < secondPrimary
+            } else {
+                return firstSecondary < secondSecondary
+            }
+        }
+    }
+
+    static func tileAllWindowsOnScreen() {
+        let screenDetection = ScreenDetection()
+        guard let context = tilingContext(focusedWindow: AccessibilityElement.getFocusedWindowElement(),
+                                          screenDetection: screenDetection) else { return }
+        let windows = windowsOnScreen(screens: context.screens,
+                                      windows: AccessibilityElement.getAllWindowElements(),
+                                      sortByPID: true,
+                                      screenFor: { screenDetection.detectScreens(using: $0)?.currentScreen }).windows
+        tileAllWindowsOnScreen(windows: windows, screen: context.screens.currentScreen)
+    }
+
+    static func tileAllWindowsOnScreen(windows: [AccessibilityElement], screen: NSScreen) {
+        guard !windows.isEmpty else { return }
+
+        let screenFrame = screen.adjustedVisibleFrame().screenFlipped
         let count = windows.count
 
         let columns = Int(ceil(sqrt(CGFloat(count))))

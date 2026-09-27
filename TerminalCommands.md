@@ -13,6 +13,7 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Enable Todo Mode](#enable-todo-mode)
 - [Only allow drag-to-snap when modifier keys are pressed](#only-allow-drag-to-snap-when-modifier-keys-are-pressed)
 - [Almost Maximize](#almost-maximize)
+- [Repeated Maximize restores the previous size and position](#repeated-maximize-restores-the-previous-size-and-position)
 - [Add an extra centering command with custom size](#add-an-extra-centering-command-with-custom-size)
 - [Add extra "ninths" sizing commands](#add-extra-ninths-sizing-commands)
 - [Add extra "eighths" sizing commands](#add-extra-eighths-sizing-commands)
@@ -39,9 +40,10 @@ The preferences window is purposefully slim, but there's a lot that can be modif
 - [Change the behavior of double-click window title bar](#change-the-behavior-of-double-click-window-title-bar)
 - [Change the order of displays to order by x coordinate](#change-the-order-of-displays-to-order-by-x-coordinate-for-next-and-prev-displays-commands)
 - [Keep window size when moving a maximized window to another display](#keep-window-size-when-moving-a-maximized-window-to-another-display)
-- [Attempt to preserve window position when moving to another display](#attempt-to-preserve-window-position-when-moving-to-another-display)
+- [Repeat the last Rectangle action when moving to another display](#repeat-the-last-rectangle-action-when-moving-to-another-display)
 - [Offset cycling position when overlapping another window](#offset-cycling-position-when-overlapping-another-window)
 - [Move windows that can't fill the snap area to the edge](#move-windows-that-cant-fill-the-snap-area-to-the-edge)
+- [Apps using native resize during window animations](#apps-using-native-resize-during-window-animations)
 
 ## Keyboard Shortcuts
 
@@ -154,6 +156,16 @@ defaults write com.knollsoft.Rectangle almostMaximizeHeight -float <VALUE_BETWEE
 
 ```bash
 defaults write com.knollsoft.Rectangle almostMaximizeWidth -float <VALUE_BETWEEN_0_&_1>
+```
+
+## Repeated Maximize restores the previous size and position
+
+By default, executing "Maximize" or "Almost Maximize" on a window that is already in that state does nothing. With this enabled, executing the same action again on a window that Rectangle has just maximized (or almost maximized) moves the window back to the size and position it had right before, so the shortcut toggles between the two. A window that was moved or resized by other means in between is maximized as usual.
+
+This can also be toggled with the "Repeated Maximize restores the previous size and position" checkbox at the bottom of the "Extras" popover in the General tab of the Settings window.
+
+```bash
+defaults write com.knollsoft.Rectangle repeatedMaximizeRestoresPrevious -bool true
 ```
 
 ## Add an extra centering command with custom size
@@ -294,13 +306,13 @@ defaults write com.knollsoft.Rectangle cascadeActiveApp -dict-add keyCode -float
 
 ## Modify the "footprint" displayed for drag to snap area
 
-Adjust the alpha (transparency). Default is 0.3.
+Adjust the alpha (transparency). Default is 0.3, or 0 for the blurred preview, where it controls tint opacity.
 
 ```bash
 defaults write com.knollsoft.Rectangle footprintAlpha -float <VALUE_BETWEEN_0_&_1>
 ```
 
-Change the border width. Default is 2 (used to be 1).
+Change the border width. Default is 2 (used to be 1), or 1 for the blurred preview. A custom value overrides either default.
 
 ```bash
 defaults write com.knollsoft.Rectangle footprintBorderWidth -float <NUM_PIXELS>
@@ -312,13 +324,13 @@ Disable the fade.
 defaults write com.knollsoft.Rectangle footprintFade -int 2
 ```
 
-Change the color.
+Change the color. With blur enabled, this sets the tint color. Delete `footprintColor` to restore the automatic light/dark tint color.
 
 ```bash
 defaults write com.knollsoft.Rectangle footprintColor -string "{\"red\":0,\"blue\":0.5,\"green\":0.5}"
 ```
 
-Change the animation duration. The value is a multiplier. Default is 0 (no animation).
+Change the animation duration. The value is a multiplier. Default is 0 (no movement animation).
 
 ```bash
 defaults write com.knollsoft.Rectangle footprintAnimationDurationMultiplier -float <MULTIPLIER>
@@ -396,6 +408,14 @@ defaults write com.knollsoft.Rectangle smallerShrinksMaximizedHeight -bool true
 
 ```bash
 defaults write com.knollsoft.Rectangle unsnapRestore -int 2
+```
+
+## Disabling window restore when moving windows sized by "Make Smaller" or "Make Larger"
+
+Keeps the window restore behavior above for everything else:
+
+```bash
+defaults write com.knollsoft.Rectangle unsnapRestoreFromSizeChange -int 2
 ```
 
 ## Changing the margin for the snap areas
@@ -584,9 +604,9 @@ To restore the default behavior:
 defaults write com.knollsoft.Rectangle autoMaximize -int 0
 ```
 
-## Attempt to preserve window position when moving to another display
+## Repeat the last Rectangle action when moving to another display
 
-By default, moving a window to the next, previous, or a specific display centers it on the destination display. Enable this to instead try preserving the window's position on the destination. If the previous action was a Rectangle snap (half, third, maximize, etc.), that snap is replayed on the destination display. If the window was positioned manually, its rect is mapped proportionally from the source display to the destination display (a window at the right third stays at the right third) and clamped so it never overflows. This is off by default.
+By default, moving a window to the next, previous, or a specific display keeps the spot it had on the source display (Settings > Behavior > "Keep window position when moving across displays"). Enable this to replay the last Rectangle action on the destination display instead, when there is one: a window that was snapped to the left half of the source display is snapped to the left half of the destination display, so it is resized to match the new display rather than keeping its size. With "Keep window position" turned off, a window with no action to replay is mapped proportionally from the source display to the destination display instead of being centered. This is off by default.
 
 ```bash
 defaults write com.knollsoft.Rectangle attemptMatchOnNextPrevDisplay -int 1
@@ -634,4 +654,25 @@ Some windows can't be resized to fill a snap area — either because they're a f
 defaults write com.knollsoft.Rectangle moveFixedSizeToEdge -int 1  # align edges and corners (default)
 defaults write com.knollsoft.Rectangle moveFixedSizeToEdge -int 2  # align corners only, center halves/sides
 defaults write com.knollsoft.Rectangle moveFixedSizeToEdge -int 3  # center within the snap area
+defaults write com.knollsoft.Rectangle moveFixedSizeToEdge -int 4  # keep windows at the snap area's top-left
+```
+
+Mode `4` keeps constrained windows at the snap area's top-left. For video windows such as IINA, this keeps left/right snaps top-aligned as you cycle through sizes.
+
+Narrower windows stay at the snap area's left edge, even for right-side snaps. Gaps still apply, and Rectangle may shift the window to keep it on screen.
+
+Restart Rectangle after changing this preference. To restore the default:
+
+```bash
+defaults delete com.knollsoft.Rectangle moveFixedSizeToEdge
+```
+
+## Apps using native resize during window animations
+
+Certain applications (such as IINA) enforce aspect ratios or custom constraints asynchronously when resized. During direct window animations, continuous intermediate frame adjustments can fight with the application's internal aspect-ratio corrections. For apps in this list, Rectangle resizes the window once natively, allows the animation duration for the app to asynchronously settle its aspect ratio, and then aligns the final achieved size using a position-only write.
+
+The default list contains IINA (`com.colliderli.iina`). You can configure this list of bundle IDs:
+
+```bash
+defaults write com.knollsoft.Rectangle directAnimationNativeResizeApps -string "[\"com.colliderli.iina\", \"org.videolan.vlc\"]"
 ```

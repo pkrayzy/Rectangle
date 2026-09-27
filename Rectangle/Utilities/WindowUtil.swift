@@ -4,15 +4,26 @@ import Foundation
 
 class WindowUtil {
     private static var windowListCache = TimeoutCache<[CGWindowID]?, [WindowInfo]>(timeout: 100)
+
+    /// Drag tracking needs current geometry rather than the window list's 100 ms cache.
+    static func getWindowFrame(id: CGWindowID) -> CGRect? {
+        guard let infos = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
+              let info = infos.first(where: { ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value == id }),
+              let bounds = info[kCGWindowBounds as String] as? [String: Any],
+              let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
+              !frame.isNull, !frame.isEmpty else { return nil }
+        return frame
+    }
     
-    static func getWindowList(ids: [CGWindowID]? = nil, all: Bool = false) -> [WindowInfo] {
-        if let infos = windowListCache[ids] {
+    static func getWindowList(ids: [CGWindowID]? = nil, all: Bool = false, forceRefresh: Bool = false) -> [WindowInfo] {
+        if !forceRefresh, let infos = windowListCache[ids] {
             return infos
         }
         var infos = [WindowInfo]()
         var rawInfos: CFArray?
         if let ids {
             let values = UnsafeMutablePointer<UnsafeRawPointer?>.allocate(capacity: ids.count)
+            defer { values.deallocate() }
             for (i, id) in ids.enumerated() {
                 values[i] = UnsafeRawPointer(bitPattern: UInt(id))
             }
@@ -40,7 +51,8 @@ class WindowUtil {
                 if let rawProcessName {
                     processName = String(rawProcessName)
                 }
-                let info = WindowInfo(id: id, level: level, frame: frame, pid: pid, processName: processName)
+                let alpha = (rawInfo.getValue(kCGWindowAlpha) as CFNumber?).map { CGFloat(truncating: $0) } ?? 1
+                let info = WindowInfo(id: id, level: level, frame: frame, pid: pid, processName: processName, alpha: alpha)
                 infos.append(info)
             }
         }
@@ -55,4 +67,5 @@ struct WindowInfo {
     let frame: CGRect
     let pid: pid_t
     let processName: String?
+    var alpha: CGFloat = 1
 }

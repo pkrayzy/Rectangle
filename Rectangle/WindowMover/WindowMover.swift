@@ -8,16 +8,20 @@ protocol WindowMover {
 
 /// Repositions a window that may not fill its snap zone. Pure geometry, no side effects.
 ///
-/// Per axis: if the zone touches exactly one screen edge on that axis, anchor the window
-/// to that edge; if it spans the full axis (both edges) or floats inside (neither), center.
-/// `window` and `zone` must be in the same (screen-flipped) coordinate space, where the
-/// `.top` edge corresponds to maxY and `.bottom` to minY (matching the rest of Rectangle).
+/// All frames must use screen-flipped (AX) coordinates. `CGRect.sharedEdges` names
+/// maxY `.top` and minY `.bottom`, even though Y grows downward.
 enum ClampedWindowAligner {
+
+    /// A window may come back a hair smaller than its zone without being clamped in any
+    /// meaningful sense: macOS shortens an AX size change that grows a window onto the Dock
+    /// edge by a point. Realigning that shortfall moves the gap off the Dock edge, where it
+    /// was invisible, onto an opposite edge where it is not, so leave the axis alone instead.
+    static let alignmentTolerance: CGFloat = 1.0
 
     static func aligned(window: CGRect, inZone zone: CGRect, sharedEdges: Edge) -> CGRect {
         var result = window
 
-        if window.width != zone.width {
+        if abs(window.width - zone.width) > alignmentTolerance {
             if sharedEdges.contains(.left), !sharedEdges.contains(.right) {
                 result.origin.x = zone.minX
             } else if sharedEdges.contains(.right), !sharedEdges.contains(.left) {
@@ -27,7 +31,7 @@ enum ClampedWindowAligner {
             }
         }
 
-        if window.height != zone.height {
+        if abs(window.height - zone.height) > alignmentTolerance {
             if sharedEdges.contains(.top), !sharedEdges.contains(.bottom) {
                 result.origin.y = zone.maxY - window.height
             } else if sharedEdges.contains(.bottom), !sharedEdges.contains(.top) {
@@ -39,12 +43,28 @@ enum ClampedWindowAligner {
 
         return result
     }
+    
+    static func aligned(window: CGRect, inZone zone: CGRect, initialRect: CGRect,
+                        screenFrame: CGRect, alignment: EdgeAlignment) -> CGRect {
+        let sharedEdges: Edge
+        switch alignment {
+        case .edgesAndCorners:
+            sharedEdges = initialRect.sharedEdges(withRect: screenFrame)
+        case .corners:
+            let edges = initialRect.sharedEdges(withRect: screenFrame)
+            sharedEdges = edges.isCorner ? edges : .none
+        case .leadingCorner:
+            return CGRect(origin: zone.origin, size: window.size)
+        case .centered:
+            sharedEdges = .none
+        }
+
+        return aligned(window: window, inZone: zone, sharedEdges: sharedEdges)
+    }
 }
 
-/// For resizable windows that clamp smaller than their snap zone (e.g. FaceTime keeping a
-/// fixed aspect ratio), `StandardWindowMover` leaves them at the zone's leading corner with
-/// a gap on the screen-edge side. Re-anchor or center them according to `moveFixedSizeToEdge`.
-/// No-op when the window already fills the zone.
+/// Repositions windows after `StandardWindowMover` requests a resize,
+/// keeping the size the app allows.
 class EdgeAlignmentWindowMover: WindowMover {
 
     func moveWindow(toRect rect: CGRect, resultParameters: ResultParameters) {
@@ -54,14 +74,13 @@ class EdgeAlignmentWindowMover: WindowMover {
         let currentWindowRect: CGRect = windowElement.frame
         if currentWindowRect.isNull { return }
 
-        let sharedEdges = Defaults.moveFixedSizeToEdge.value.alignmentEdges(
-            for: resultParameters.calcResult.initialRect.screenFlipped,
-            in: resultParameters.visibleFrameOfScreen.screenFlipped
+        let adjusted = ClampedWindowAligner.aligned(
+            window: currentWindowRect,
+            inZone: rect.screenFlipped,
+            initialRect: resultParameters.calcResult.initialRect.screenFlipped,
+            screenFrame: resultParameters.visibleFrameOfScreen.screenFlipped,
+            alignment: Defaults.moveFixedSizeToEdge.value
         )
-
-        let adjusted = ClampedWindowAligner.aligned(window: currentWindowRect,
-                                                    inZone: rect.screenFlipped,
-                                                    sharedEdges: sharedEdges)
 
         if !adjusted.equalTo(currentWindowRect) {
             windowElement.setFrame(adjusted)
@@ -73,8 +92,9 @@ enum EdgeAlignment: Int {
     case edgesAndCorners = 1
     case corners = 2
     case centered = 3
-
-    func alignmentEdges(for rect: CGRect, in screenFrame: CGRect) -> Edge {
+    case leadingCorner = 4
+    
+    func alignmentEdges(for rect: CGRect, in screenFrame: CGRect) -> Edge? {
         let sharedEdges = rect.sharedEdges(withRect: screenFrame)
 
         switch self {
@@ -83,7 +103,9 @@ enum EdgeAlignment: Int {
         case .corners:
             return sharedEdges.isCorner ? sharedEdges : .none
         case .centered:
-            return .none
+            return Edge.none
+        case .leadingCorner:
+            return nil
         }
     }
 }

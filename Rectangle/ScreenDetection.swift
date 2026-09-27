@@ -4,8 +4,17 @@ import Cocoa
 
 class ScreenDetection {
 
+    private let availableScreens: () -> [NSScreen]
+    private let logicalFrame: (AccessibilityElement) -> CGRect?
+
+    init(screens: @escaping () -> [NSScreen] = { NSScreen.screens },
+         logicalFrame: @escaping (AccessibilityElement) -> CGRect? = { WindowAnimator.shared.logicalFrame(for: $0) }) {
+        availableScreens = screens
+        self.logicalFrame = logicalFrame
+    }
+
     func detectScreens(using frontmostWindowElement: AccessibilityElement?) -> UsableScreens? {
-        let screens = NSScreen.screens
+        let screens = availableScreens()
         guard let firstScreen = screens.first else { return nil }
         
         if screens.count == 1 {
@@ -17,7 +26,9 @@ class ScreenDetection {
         }
         
         let screensOrdered = order(screens: screens)
-        guard let sourceScreen: NSScreen = screenContaining(frontmostWindowElement?.frame ?? CGRect.zero, screens: screensOrdered) else {
+        // Route repeated actions using the destination instead of an intermediate animation frame.
+        let windowFrame = frontmostWindowElement.map { logicalFrame($0) ?? $0.frame } ?? .zero
+        guard let sourceScreen: NSScreen = screenContaining(windowFrame, screens: screensOrdered) else {
             let adjacentScreens = AdjacentScreens(prev: firstScreen, next: firstScreen)
             return UsableScreens(currentScreen: firstScreen, adjacentScreens: adjacentScreens, numScreens: screens.count, screensOrdered: screensOrdered)
         }
@@ -28,7 +39,7 @@ class ScreenDetection {
     }
 
     func detectScreensAtCursor() -> UsableScreens? {
-        let screens = NSScreen.screens
+        let screens = availableScreens()
         if screens.count == 1 {
             return detectScreens(using: nil)
         }
@@ -430,12 +441,7 @@ extension NSScreen {
         newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
         newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
         newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
-        
-        if #available(macOS 12.0, *), self.safeAreaInsets.top != 0, Defaults.screenEdgeGapTopNotch.value != 0 {
-            newFrame.size.height -= (Defaults.screenEdgeGapTopNotch.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
-        } else {
-            newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
-        }
+        newFrame.size.height -= (Defaults.screenEdgeGapTopNotch.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
         
         return newFrame
     }

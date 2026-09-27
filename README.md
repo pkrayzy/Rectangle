@@ -1,14 +1,16 @@
 # Rectangle
 
-[![Build](https://github.com/rxhanson/Rectangle/actions/workflows/build.yml/badge.svg)](https://github.com/rxhanson/Rectangle/actions/workflows/build.yml)
+Rectangle is a window management app for macOS based on Spectacle.
 
-Rectangle is a window management app based on Spectacle, written in Swift.
-
-<img width="962" height="886" alt="image" src="https://github.com/user-attachments/assets/e8d88e5f-7d4f-43bc-a82e-146c42f92d68" />
+<img width="612" height="810" alt="image" src="https://github.com/user-attachments/assets/c088d1e2-3661-4041-ac30-95da89ac4a41" />
 
 ## System Requirements
 
-Rectangle supports macOS v10.15+. The last version that is supported for macOS 10.13 and 10.14 is https://github.com/rxhanson/Rectangle/releases/tag/v0.73.
+Rectangle supports macOS v14+. 
+
+For macOS 10.15 - 13: [v1.100](https://github.com/rxhanson/Rectangle/releases/tag/v1.100)
+
+For macOS 10.13 and 10.14: [v0.73](https://github.com/rxhanson/Rectangle/releases/tag/v0.73)
 
 ## Installation
 
@@ -35,6 +37,24 @@ Drag a window to the edge of the screen. When the mouse cursor reaches the edge 
 | Bottom left, center, or right third                    | Respective third                       |
 | Bottom left or right third, then drag to bottom center | First or last two thirds, respectively |
 
+In **Snap Areas**, enable **Animate windows (experimental)** for smooth window resizing or **Blur footprint** for a blurred snap preview. Both are off by default. Animated snapping keeps the selected edge or center aligned when an app limits its window size or aspect ratio. Dragging a snapped window starts restoring its previous size as the window begins moving, and a quick release lets the remaining restore animation continue. Far-right title-bar grabs can still show visible jumps. Title-bar double-click maximize/restore follows the same animation setting and timing as snapping. Window animation has been tested in known scenarios, but remains experimental because repeatedly updating the window's size and position during the transition may cause issues in some edge cases.
+
+### Tile windows in rows or columns
+
+Enable **Show additional sizes in menu** to include Rows and Columns in the **Tiling** submenu. Their keyboard shortcuts remain available when the submenu is hidden.
+
+In Settings > General, click **Extras** to assign separate keys to **Tile Windows in Rows** and **Tile Windows in Columns**. Each action arranges ordinary windows in the current Space on the display containing the focused window, including windows covered by others. When no ordinary window is focused, the display under the mouse pointer is used instead. **Tile All** uses the same display-selection rule. Normally, windows on another display stay in place, and an empty target display does nothing. When Rectangle's combined-display mode is enabled and macOS "Displays have separate Spaces" is disabled, Rows and Columns instead tile across the combined display area. Rows run from top to bottom; columns run from left to right. Within either direction, Rectangle uses the windows' upper-left positions before moving them to choose their order.
+
+From an unrecognized layout, the first press starts with one window per row or column. Repeating the action cycles through distinct grid layouts. In Settings > General > **Extras**, **Maximum windows per column** and **Maximum windows per row** control the cycle independently. Both default to 3 and are independent of the single-window **Repeated commands** setting. Set either limit to 1 to keep that action's original one-window-per-row-or-column behavior. Existing saved limits are preserved.
+
+Windows are balanced across occupied rows or columns, with no deliberately empty cells. For example, six windows with a column limit of 3 cycle through six columns of one, three columns of two, two columns of three, then repeat. Five windows cycle through column populations `1,1,1,1,1`, `2,2,1`, and `3,2`. A column with fewer windows still fills its full height; rows behave the same way across their full width. Duplicate layouts are skipped, so four windows with a limit of 3 alternate between four groups of one and two groups of two. Limits above the number of windows add no layouts.
+
+Columns have equal widths and rows have equal heights, within one display pixel, when the apps allow it. The grid fills the selected work area inside macOS reservations (such as the menu bar and Dock) and Rectangle's configured screen-edge gaps. App size restrictions take precedence: if two columns share 1000 pixels and one requires at least 600, a feasible allocation is 600/400. If no allocation satisfies all app restrictions, Rectangle still attempts the layout, which may leave a gap or overlap. If an app does not respond in time, the layout may remain partial.
+
+Moving or resizing a window, opening or closing one, or changing screen-edge gaps does not rearrange windows automatically. The next press of the same action reapplies its active grid layout using the current windows and their positions. A press that would leave the layout unchanged advances immediately. Lowering a limit below the active layout uses the greatest allowed layout on the next press. Rectangle keeps the active layout only while it is running. After a restart, the first press advances from an intact, recognizable grid; otherwise it starts with one window per row or column.
+
+The Todo window is excluded using the same rules as Rectangle's other multi-window actions. The bands respect the existing Todo sidebar reservation. For example, with 1000 pixels available and a 200-pixel sidebar reservation, the other windows tile within the remaining 800 pixels while Todo stays in place.
+
 ### Ignore an app
 
 Ignoring an app means that when the app is frontmost, keyboard shortcuts are un-registered from macOS. When the app is no longer frontmost, keyboard shortcuts are re-registered with macOS. This is useful for apps that have the same shortcuts like Rectangle and you do not want to change them.
@@ -48,7 +68,7 @@ To un-ignore an app that you have selected to ignore, simply bring that app fron
 
 Open the URL `rectangle://execute-action?name=[name]`. Do not activate Rectangle if possible.
 
-Available values for `[name]`: `left-half`, `right-half`, `center-half`, `top-half`, `bottom-half`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `first-third`, `center-third`, `last-third`, `first-two-thirds`, `last-two-thirds`, `maximize`, `almost-maximize`, `maximize-height`, `smaller`, `larger`, `center`, `center-prominently`, `restore`, `next-display`, `previous-display`, `move-left`, `move-right`, `move-up`, `move-down`, `first-fourth`, `second-fourth`, `third-fourth`, `last-fourth`, `first-three-fourths`, `last-three-fourths`, `top-left-sixth`, `top-center-sixth`, `top-right-sixth`, `bottom-left-sixth`, `bottom-center-sixth`, `bottom-right-sixth`, `specified`, `reverse-all`, `top-left-ninth`, `top-center-ninth`, `top-right-ninth`, `middle-left-ninth`, `middle-center-ninth`, `middle-right-ninth`, `bottom-left-ninth`, `bottom-center-ninth`, `bottom-right-ninth`, `top-left-third`, `top-right-third`, `bottom-left-third`, `bottom-right-third`, `top-left-eighth`, `top-center-left-eighth`, `top-center-right-eighth`, `top-right-eighth`, `bottom-left-eighth`, `bottom-center-left-eighth`, `bottom-center-right-eighth`, `bottom-right-eighth`, `tile-all`, `cascade-all`, `cascade-active-app`
+Available values for `[name]`: `left-half`, `right-half`, `center-half`, `top-half`, `bottom-half`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `first-third`, `center-third`, `last-third`, `first-two-thirds`, `last-two-thirds`, `maximize`, `almost-maximize`, `maximize-height`, `smaller`, `larger`, `center`, `center-prominently`, `restore`, `next-display`, `previous-display`, `move-left`, `move-right`, `move-up`, `move-down`, `first-fourth`, `second-fourth`, `third-fourth`, `last-fourth`, `first-three-fourths`, `last-three-fourths`, `top-left-sixth`, `top-center-sixth`, `top-right-sixth`, `bottom-left-sixth`, `bottom-center-sixth`, `bottom-right-sixth`, `specified`, `reverse-all`, `top-left-ninth`, `top-center-ninth`, `top-right-ninth`, `middle-left-ninth`, `middle-center-ninth`, `middle-right-ninth`, `bottom-left-ninth`, `bottom-center-ninth`, `bottom-right-ninth`, `top-left-third`, `top-right-third`, `bottom-left-third`, `bottom-right-third`, `top-left-eighth`, `top-center-left-eighth`, `top-center-right-eighth`, `top-right-eighth`, `bottom-left-eighth`, `bottom-center-left-eighth`, `bottom-center-right-eighth`, `bottom-right-eighth`, `tile-all`, `tile-rows`, `tile-columns`, `cascade-all`, `cascade-active-app`
 
 Example, from a shell: `open -g "rectangle://execute-action?name=left-half"`
 
@@ -81,6 +101,10 @@ See [TerminalCommands.md](TerminalCommands.md)
 ### Rectangle doesn't have the ability to move to other desktops/spaces
 
 Apple never released a public API for doing this. Rectangle Pro has next/prev Space actions, but there are no plans to add those into Rectangle at this time.
+
+### Windows overlap when using thirds or other small layouts
+
+Some apps enforce a minimum window size that is larger than the requested layout. For example, a window with a minimum width of 600 points cannot fit a 504-point third of a display. Rectangle keeps the window on screen and briefly shows a “Minimum window size reached” HUD with a window icon when the app leaves it larger than the requested size. Use a larger layout, such as halves, or reduce the adjacent window manually. Rectangle cannot override an app's minimum window size.
 
 ### Window resizing is off slightly for iTerm2
 
