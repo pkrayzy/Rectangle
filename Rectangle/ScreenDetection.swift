@@ -56,6 +56,16 @@ class ScreenDetection {
         return UsableScreens(currentScreen: cursorScreen, adjacentScreens: adjacentScreens, numScreens: screens.count, screensOrdered: screensOrdered)
     }
 
+    func detectScreens(at screen: NSScreen) -> UsableScreens? {
+        let screens = availableScreens()
+        guard screens.contains(screen) else { return nil }
+        if screens.count == 1 { return detectScreens(using: nil) }
+        let ordered = order(screens: screens)
+        return UsableScreens(currentScreen: screen,
+                             adjacentScreens: adjacent(toFrameOfScreen: screen.frame, screens: ordered),
+                             numScreens: screens.count, screensOrdered: ordered)
+    }
+
     func screenContaining(_ rect: CGRect, screens: [NSScreen]) -> NSScreen? {
         var result: NSScreen? = NSScreen.main
         var largestPercentageOfRectWithinFrameOfScreen: CGFloat = 0.0
@@ -441,8 +451,13 @@ extension NSScreen {
         newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
         newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
         newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
-        newFrame.size.height -= (Defaults.screenEdgeGapTopNotch.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
         
+        if self.safeAreaInsets.top != 0, Defaults.screenEdgeGapTopNotch.value != 0 {
+            newFrame.size.height -= (Defaults.screenEdgeGapTopNotch.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+        } else {
+            newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+        }
+
         return newFrame
     }
 

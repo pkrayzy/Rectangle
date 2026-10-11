@@ -57,8 +57,11 @@ class Defaults {
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
     static let footprintAlpha = DoubleDefault(key: "footprintAlpha")
     static var effectiveFootprintAlpha: Double {
+        effectiveFootprintAlpha(usesBlur: footprintBlur.enabled)
+    }
+    static func effectiveFootprintAlpha(usesBlur: Bool) -> Double {
         if UserDefaults.standard.object(forKey: footprintAlpha.key) == nil {
-            return footprintBlur.enabled ? 0 : 0.3
+            return usesBlur ? 0 : 0.3
         }
         return footprintAlpha.value
     }
@@ -84,6 +87,7 @@ class Defaults {
     static let cyclingOverlapOffsetSize = FloatDefault(key: "cyclingOverlapOffsetSize", defaultValue: 11)
     static let cyclingOverlapMaxCascade = IntDefault(key: "cyclingOverlapMaxCascade", defaultValue: 1)
     static let stackBadge = OptionalBoolDefault(key: "stackBadge")
+    static let stackSameSizeOnly = OptionalBoolDefault(key: "stackSameSizeOnly")
     static let fullIgnoreBundleIds = JSONDefault<[String]>(key: "fullIgnoreBundleIds")
     static let notifiedOfProblemApps = BoolDefault(key: "notifiedOfProblemApps")
     static let specifiedHeight = FloatDefault(key: "specifiedHeight", defaultValue: 1050)
@@ -117,7 +121,7 @@ class Defaults {
     static let doubleClickTitleBar = IntDefault(key: "doubleClickTitleBar")
     static let doubleClickTitleBarRestore = OptionalBoolDefault(key: "doubleClickTitleBarRestore")
     static let doubleClickTitleBarIgnoredApps = JSONDefault<[String]>(key: "doubleClickTitleBarIgnoredApps")
-    static let doubleClickToolBarIgnoredApps = JSONDefault<Set<String>>(key: "doubleClickTitleBarIgnoredApps", defaultValue: ["epp.package.java"])
+    static let doubleClickToolBarIgnoredApps = JSONDefault<Set<String>>(key: "doubleClickToolBarIgnoredApps", defaultValue: ["epp.package.java"])
     static let ignoreDragSnapToo = OptionalBoolDefault(key: "ignoreDragSnapToo")
     static let systemWideMouseDown = OptionalBoolDefault(key: "systemWideMouseDown")
     static let systemWideMouseDownApps = JSONDefault<Set<String>>(key:"systemWideMouseDownApps", defaultValue: Set<String>(["org.languagetool.desktop", "com.microsoft.teams2"]))
@@ -230,6 +234,7 @@ class Defaults {
         cyclingOverlapOffsetSize,
         cyclingOverlapMaxCascade,
         stackBadge,
+        stackSameSizeOnly,
         moveFixedSizeToEdge,
         greenButtonOverride
     ]
@@ -306,6 +311,7 @@ class OptionalBoolDefault: Default {
     
     var userDisabled: Bool { enabled == false }
     var userEnabled: Bool { enabled == true }
+    var userModified: Bool { enabled != nil }
     var notSet: Bool { enabled == nil }
     
     init(key: String) {

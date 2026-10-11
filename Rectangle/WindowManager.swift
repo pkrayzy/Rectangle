@@ -86,7 +86,10 @@ class WindowManager {
                     }
                 } else {
                     WindowAnimator.shared.cancel(for: frontmostWindowElement)
-                    frontmostWindowElement.setFrame(restoreRect)
+                    windowAnimator.afterPendingWrites { [weak self] in
+                        guard self?.executionID == currentExecutionID else { return }
+                        frontmostWindowElement.setFrame(restoreRect)
+                    }
                 }
             }
             AppDelegate.windowHistory.lastRectangleActions.removeValue(forKey: windowId)
@@ -98,7 +101,9 @@ class WindowManager {
         let sourceScreens = screenDetection.detectScreens(using: frontmostWindowElement)
         var screens: UsableScreens?
         if let screen = parameters.screen {
-            screens = UsableScreens(currentScreen: screen, numScreens: 1)
+            screens = parameters.source == .titleBar
+            ? screenDetection.detectScreens(at: screen)
+            : UsableScreens(currentScreen: screen, numScreens: 1)
         } else {
             screens = Defaults.useCursorScreenDetection.enabled
             ? screenDetection.detectScreensAtCursor()
@@ -167,7 +172,8 @@ class WindowManager {
             calcResult.rect = OverlapOffsetGeometry.applyOverlapOffsetIfNeeded(calcResult.rect, windowId: windowId, screen: calcResult.screen)
         }
 
-        let isFixedSize = (!frontmostWindowElement.isResizable() && action.resizes) || frontmostWindowElement.isSystemDialog == true
+        let willResize = action.resizes || calcResult.rect.size != currentNormalizedRect.size
+        let isFixedSize = (!frontmostWindowElement.isResizable() && willResize) || frontmostWindowElement.isSystemDialog == true
         let visibleFrameOfDestinationScreen = calcResult.resultingScreenFrame ?? calcResult.screen.adjustedVisibleFrame(ignoreTodo)
         let isMovedAcrossDisplays = sourceScreens.currentScreen != calcResult.screen
         let cooperativeCornerPlan = cooperativeCornerResizePlan(focusedWindowId: windowId,
@@ -230,14 +236,15 @@ class WindowManager {
             && (!isMovedAcrossDisplays || parameters.source == .dragToSnap)
             && !Defaults.cooperativeCornerResize.enabled
         
-        let completeMove = { [self] (animationHandledPlacement: Bool) in
+        let completeMove = { [self] (animatedFrame: CGRect?) in
             guard executionID == currentExecutionID else { return }
             var resultingRect: CGRect
             if let cooperativeCornerPlan {
                 resultingRect = applyCooperativeCornerResize(result: resultParameters,
                                                              plan: cooperativeCornerPlan)
-            } else if animationHandledPlacement {
-                resultingRect = frontmostWindowElement.frame
+            } else if let animatedFrame {
+                // The animation worker already verified this frame off the main thread.
+                resultingRect = animatedFrame
             } else {
                 resultingRect = apply(result: resultParameters)
             }
@@ -277,7 +284,9 @@ class WindowManager {
                                                       screenFrame: sourceScreens.currentScreen.adjustedVisibleFrame(ignoreTodo),
                                                       currentAction: action,
                                                       lastRectangleAction: lastRectangleAction)
-                resultingRect = frontmostWindowElement.frame
+                if animatedFrame == nil || Defaults.cooperativeCornerResize.enabled {
+                    resultingRect = frontmostWindowElement.frame
+                }
             }
 
             postProcess(result: resultParameters, resultingRect: resultingRect, incrementCount: !animated)
@@ -296,11 +305,11 @@ class WindowManager {
                                    to: calcResult.rect.screenFlipped,
                                    releasedSnap: parameters.source == .dragToSnap, placement: placement,
                                    profile: parameters.source == .keyboardShortcut ? .keyboard : .standard) { frame in
-                completeMove(!frame.isNull)
+                completeMove(frame.isNull ? nil : frame)
             }
         } else {
             windowAnimator.cancel(for: frontmostWindowElement)
-            completeMove(false)
+            windowAnimator.afterPendingWrites { completeMove(nil) }
         }
     }
     

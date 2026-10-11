@@ -30,7 +30,7 @@ class SnapAreaSettingsViewController: NSViewController {
 @Observable
 final class SnapAreaViewModel {
     // General Settings
-    var windowSnapping: Bool = true {
+    var windowSnapping: Bool {
         didSet {
             guard oldValue != windowSnapping else { return }
             Defaults.windowSnapping.enabled = windowSnapping
@@ -41,68 +41,100 @@ final class SnapAreaViewModel {
         }
     }
     
-    var unsnapRestore: Bool = true {
+    var unsnapRestore: Bool {
         didSet {
+            guard oldValue != unsnapRestore else { return }
             Defaults.unsnapRestore.enabled = unsnapRestore
         }
     }
     
-    var hapticFeedback: Bool = false {
+    var hapticFeedback: Bool {
         didSet {
+            guard oldValue != hapticFeedback else { return }
             Defaults.hapticFeedbackOnSnap.enabled = hapticFeedback
         }
     }
     
-    var animateFootprint: Bool = true {
+    var animateFootprint: Bool {
         didSet {
-            let val: Float = animateFootprint ? 0.75 : 0.0
-            Defaults.footprintAnimationDurationMultiplier.value = val
+            guard oldValue != animateFootprint else { return }
+            if animateFootprint {
+                if Defaults.footprintAnimationDurationMultiplier.value == 0.0 {
+                    Defaults.footprintAnimationDurationMultiplier.value = 0.75
+                }
+            } else {
+                Defaults.footprintAnimationDurationMultiplier.value = 0.0
+            }
         }
     }
     
-    var footprintBlur: Bool = false {
+    var footprintBlur: Bool {
         didSet {
+            guard oldValue != footprintBlur else { return }
             Defaults.footprintBlur.enabled = footprintBlur
         }
     }
     
-    var blurAppearance: BlurAppearance = .system {
+    var blurAppearance: BlurAppearance {
         didSet {
+            guard oldValue != blurAppearance else { return }
             Defaults.blurAppearance.value = blurAppearance
         }
     }
     
-    var missionControlDraggingDisabled: Bool = false {
+    var preventMissionControlDragging: Bool {
         didSet {
-            Defaults.missionControlDragging.enabled = !missionControlDraggingDisabled
-            Notification.Name.missionControlDragging.post(object: !missionControlDraggingDisabled)
+            guard oldValue != preventMissionControlDragging else { return }
+            Defaults.missionControlDragging.enabled = !preventMissionControlDragging
+            Notification.Name.missionControlDragging.post(object: !preventMissionControlDragging)
         }
     }
     
-    // Displays / UI State
-    var isPortraitConnected: Bool = NSScreen.portraitDisplayConnected
     
+    // UI State
+    var showMissionControlDragging: Bool
+    var isPortraitConnected: Bool
+    private(set) var reduceTransparency: Bool
+
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        syncDefaults()
+        self.reduceTransparency = NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
+        self.windowSnapping = !Defaults.windowSnapping.userDisabled
+        self.unsnapRestore = !Defaults.unsnapRestore.userDisabled
+        self.hapticFeedback = Defaults.hapticFeedbackOnSnap.userEnabled
+        self.animateFootprint = Defaults.footprintAnimationDurationMultiplier.value > 0
+        self.footprintBlur = Defaults.footprintBlur.enabled
+        self.blurAppearance = Defaults.blurAppearance.value
+        self.preventMissionControlDragging = Defaults.missionControlDragging.userDisabled
+        self.showMissionControlDragging = Defaults.missionControlDragging.userModified
+        self.isPortraitConnected = NSScreen.portraitDisplayConnected
+        
         setupNotificationObservers()
     }
     
     func syncDefaults() {
-        windowSnapping = !Defaults.windowSnapping.userDisabled
-        unsnapRestore = !Defaults.unsnapRestore.userDisabled
-        hapticFeedback = Defaults.hapticFeedbackOnSnap.userEnabled
-        animateFootprint = Defaults.footprintAnimationDurationMultiplier.value > 0
-        footprintBlur = Defaults.footprintBlur.enabled
-        blurAppearance = Defaults.blurAppearance.value
-        missionControlDraggingDisabled = Defaults.missionControlDragging.userDisabled
-        isPortraitConnected = NSScreen.portraitDisplayConnected
+        self.windowSnapping = !Defaults.windowSnapping.userDisabled
+        self.unsnapRestore = !Defaults.unsnapRestore.userDisabled
+        self.hapticFeedback = Defaults.hapticFeedbackOnSnap.userEnabled
+        self.animateFootprint = Defaults.footprintAnimationDurationMultiplier.value > 0
+        self.footprintBlur = Defaults.footprintBlur.enabled
+        self.blurAppearance = Defaults.blurAppearance.value
+        self.preventMissionControlDragging = Defaults.missionControlDragging.userDisabled
+        self.showMissionControlDragging = Defaults.missionControlDragging.userModified
+        self.isPortraitConnected = NSScreen.portraitDisplayConnected
     }
     
     private func setupNotificationObservers() {
         let center = NotificationCenter.default
-        
+
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.reduceTransparency = NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
+            }
+            .store(in: &cancellables)
+
         center.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
                 self?.isPortraitConnected = NSScreen.portraitDisplayConnected
@@ -146,7 +178,7 @@ final class SnapAreaViewModel {
 
 struct SnapAreaSettingsView: View {
     @State private var viewModel = SnapAreaViewModel()
-    
+
     private var landscapeHeaderTitle: String {
         viewModel.isPortraitConnected ? String(localized: "Landscape Snap Areas") : String(localized: "Snap Areas")
     }
@@ -163,18 +195,20 @@ struct SnapAreaSettingsView: View {
             Section {
                 Toggle("Haptic feedback", isOn: $viewModel.hapticFeedback)
                 Toggle("Animate footprint", isOn: $viewModel.animateFootprint)
-                Toggle("Blur footprint", isOn: $viewModel.footprintBlur)
-                
-                if viewModel.footprintBlur {
-                    Picker("Blur appearance", selection: $viewModel.blurAppearance) {
-                        Text("Follow System").tag(BlurAppearance.system)
-                        Text("Light").tag(BlurAppearance.light)
-                        Text("Dark").tag(BlurAppearance.dark)
+                if !viewModel.reduceTransparency {
+                    Toggle("Blur footprint", isOn: $viewModel.footprintBlur)
+
+                    if viewModel.footprintBlur {
+                        Picker("Blur appearance", selection: $viewModel.blurAppearance) {
+                            Text("Follow System").tag(BlurAppearance.system)
+                            Text("Light").tag(BlurAppearance.light)
+                            Text("Dark").tag(BlurAppearance.dark)
+                        }
                     }
                 }
                 
-                if viewModel.missionControlDraggingDisabled {
-                    Toggle("Mission Control dragging", isOn: $viewModel.missionControlDraggingDisabled)
+                if viewModel.showMissionControlDragging {
+                    Toggle("Prevent Mission Control from triggering while dragging", isOn: $viewModel.preventMissionControlDragging)
                 }
             }
             
@@ -203,6 +237,9 @@ struct SnapAreaSettingsView: View {
         .frame(width: 500)
         .animation(.easeInOut(duration: 0.2), value: viewModel.footprintBlur)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isPortraitConnected)
+        .onChange(of: viewModel.reduceTransparency) { _, _ in
+            Notification.Name.snapAreaSettingsNeedsResize.post()
+        }
         .onChange(of: viewModel.isPortraitConnected) { oldValue, isConnected in
             Notification.Name.snapAreaSettingsNeedsResize.post(object:isConnected)
         }

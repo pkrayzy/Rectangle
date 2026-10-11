@@ -5,6 +5,8 @@ import AppKit
 
 @Observable
 final class BehaviorSettingsViewModel {
+    let shortcutRecordingObserver = ShortcutRecordingObserver()
+
     // MARK: - Window Behavior & Cycle Settings
     var subsequentExecutionMode: SubsequentExecutionMode {
         didSet {
@@ -130,8 +132,17 @@ final class BehaviorSettingsViewModel {
         didSet { Defaults.cyclingOverlapOffset.enabled = cyclingOverlapOffset }
     }
     var stackBadge: Bool {
-        didSet { Defaults.stackBadge.enabled = stackBadge }
+        didSet {
+            Defaults.stackBadge.enabled = stackBadge
+            Notification.Name.stackBadgeChanged.post()
+        }
     }
+    var stackSameSizeOnly: Bool {
+        didSet { Defaults.stackSameSizeOnly.enabled = stackSameSizeOnly }
+    }
+    /// Mirrors the App Settings restriction toggle, so the window action
+    /// recorders here pick up a change made while Settings is open.
+    var allowAnyShortcut = Defaults.allowAnyShortcut.enabled
     var horizontalSplitRatio: Float {
         didSet {
             Defaults.horizontalSplitRatio.value = horizontalSplitRatio
@@ -204,6 +215,7 @@ final class BehaviorSettingsViewModel {
         self.showAdditionalSizesInMenu = Defaults.showAdditionalSizesInMenu.userEnabled
         self.cyclingOverlapOffset = Defaults.cyclingOverlapOffset.userEnabled
         self.stackBadge = Defaults.stackBadge.userEnabled
+        self.stackSameSizeOnly = Defaults.stackSameSizeOnly.userEnabled
         self.horizontalSplitRatio = hRatio
         self.verticalSplitRatio = vRatio
         self.halvesPreserveOtherAxisSize = Defaults.halvesPreserveOtherAxisSize.enabled
@@ -220,7 +232,13 @@ final class BehaviorSettingsViewModel {
             self?.reloadFromDefaults()
         }
         Notification.Name.stackBadgeChanged.onPost { [weak self] _ in
-            self?.stackBadge = Defaults.stackBadge.userEnabled
+            guard let self else { return }
+            if self.stackBadge != Defaults.stackBadge.userEnabled {
+                self.stackBadge = Defaults.stackBadge.userEnabled
+            }
+        }
+        Notification.Name.allowAnyShortcut.onPost { [weak self] _ in
+            self?.allowAnyShortcut = Defaults.allowAnyShortcut.enabled
         }
     }
     
@@ -258,6 +276,8 @@ final class BehaviorSettingsViewModel {
         self.showAdditionalSizesInMenu = Defaults.showAdditionalSizesInMenu.userEnabled
         self.cyclingOverlapOffset = Defaults.cyclingOverlapOffset.userEnabled
         self.stackBadge = Defaults.stackBadge.userEnabled
+        self.stackSameSizeOnly = Defaults.stackSameSizeOnly.userEnabled
+        self.allowAnyShortcut = Defaults.allowAnyShortcut.enabled
         self.horizontalSplitRatio = hRatio
         self.verticalSplitRatio = vRatio
         self.halvesPreserveOtherAxisSize = Defaults.halvesPreserveOtherAxisSize.enabled
@@ -316,9 +336,15 @@ final class BehaviorSettingsViewModel {
             let conflictDescriptionText = String(localized: "To let Rectangle manage the title bar double click functionality, you need to disable the corresponding macOS setting.")
             let closeText = String(localized: "Close")
             
-            let response = AlertUtil.twoButtonAlert(question: conflictTitleText, text: conflictDescriptionText, confirmText: openSettings, cancelText: closeText)
-            if response == .alertFirstButtonReturn {
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.dock")!)
+            Task {
+                await MainActor.run {
+                    let response = AlertUtil.twoButtonAlert(question: conflictTitleText, text: conflictDescriptionText, confirmText: openSettings, cancelText: closeText)
+                    if response == .alertFirstButtonReturn {
+                        if let systemSettingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.dock") {
+                            NSWorkspace.shared.open(systemSettingsURL)
+                        }
+                    }
+                }
             }
         }
         Defaults.doubleClickTitleBar.value = (enabled ? WindowAction.maximize.rawValue : -1) + 1
