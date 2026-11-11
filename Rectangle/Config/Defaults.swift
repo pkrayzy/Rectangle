@@ -22,6 +22,8 @@ class Defaults {
     static let almostMaximizeWidth = FloatDefault(key: "almostMaximizeWidth")
     static let gapSize = FloatDefault(key: "gapSize")
     static let skipGapTopEdge = BoolDefault(key: "skipGapTopEdge")
+    static let snapBeforeReachingEdges = DoubleDefault(key: "snapBeforeReachingEdges")
+
     static let snapEdgeMarginTop = FloatDefault(key: "snapEdgeMarginTop", defaultValue: 5)
     static let snapEdgeMarginBottom = FloatDefault(key: "snapEdgeMarginBottom", defaultValue: 5)
     static let snapEdgeMarginLeft = FloatDefault(key: "snapEdgeMarginLeft", defaultValue: 5)
@@ -33,6 +35,7 @@ class Defaults {
     static let moveFixedSizeToEdge = IntEnumDefault<EdgeAlignment>(key: "moveFixedSizeToEdge", defaultValue: .edgesAndCorners)
     static let ignoredSnapAreas = IntDefault(key: "ignoredSnapAreas")
     static let traverseSingleScreen = OptionalBoolDefault(key: "traverseSingleScreen")
+    static let thirdsAndFourthsAcrossDisplays = OptionalBoolDefault(key: "thirdsAndFourthsAcrossDisplays")
     static let useCursorScreenDetection = BoolDefault(key: "useCursorScreenDetection")
     static let minimumWindowWidth = DoubleDefault(key: "minimumWindowWidth", defaultValue: 0.25)
     static let minimumWindowHeight = DoubleDefault(key: "minimumWindowHeight", defaultValue: 0.25)
@@ -49,7 +52,8 @@ class Defaults {
     static let screenEdgeGapLeft = FloatDefault(key: "screenEdgeGapLeft", defaultValue: 0)
     static let screenEdgeGapRight = FloatDefault(key: "screenEdgeGapRight", defaultValue: 0)
     static let screenEdgeGapsOnMainScreenOnly = BoolDefault(key: "screenEdgeGapsOnMainScreenOnly")
-    static let screenEdgeGapTopNotch = FloatDefault(key: "screenEdgeGapTopNotch", defaultValue: 0)
+    static let screenEdgeGapTopNotch = DoubleDefault(key: "screenEdgeGapTopNotch", defaultValue: -1)
+    static let ignoreMenuBar = OptionalBoolDefault(key: "ignoreMenuBar")
     static let lastVersion = StringDefault(key: "lastVersion")
     static let installVersion = StringDefault(key: "installVersion")
     static let showAllActionsInMenu = OptionalBoolDefault(key: "showAllActionsInMenu")
@@ -130,6 +134,9 @@ class Defaults {
     static let screensOrderedByX = IntEnumDefault<ScreenOrdering>(key: "screensOrderedByX", defaultValue: .yThenMinX)
     static let combinedDisplayMode = OptionalBoolDefault(key: "combinedDisplayMode")
     static let greenButtonOverride = BoolDefault(key: "greenButtonOverride")
+    static let mouseButtonShortcutsUseWindowUnderCursor = BoolDefault(key: "mouseButtonShortcutsUseWindowUnderCursor")
+    static let ignoreShortcutsInMissionControl = BoolDefault(key: "ignoreShortcutsInMissionControl", defaultValue: true)
+    static let newWindowAction = StringDefault(key: "newWindowAction")
     static let wasWelcomeDisplayed = BoolDefault(key: "wasWelcomeDisplayed")
     static var array: [Default] = [
         launchOnLogin,
@@ -150,6 +157,7 @@ class Defaults {
         almostMaximizeWidth,
         gapSize,
         skipGapTopEdge,
+        snapBeforeReachingEdges,
         snapEdgeMarginTop,
         snapEdgeMarginBottom,
         snapEdgeMarginLeft,
@@ -160,6 +168,7 @@ class Defaults {
         repeatedMaximizeRestoresPrevious,
         ignoredSnapAreas,
         traverseSingleScreen,
+        thirdsAndFourthsAcrossDisplays,
         minimumWindowWidth,
         minimumWindowHeight,
         sizeOffset,
@@ -175,6 +184,8 @@ class Defaults {
         screenEdgeGapRight,
         screenEdgeGapsOnMainScreenOnly,
         screenEdgeGapTopNotch,
+        ignoreMenuBar,
+        newWindowAction,
         showAllActionsInMenu,
         showAdditionalSizesInMenu,
         footprintAlpha,
@@ -236,7 +247,9 @@ class Defaults {
         stackBadge,
         stackSameSizeOnly,
         moveFixedSizeToEdge,
-        greenButtonOverride
+        greenButtonOverride,
+        mouseButtonShortcutsUseWindowUnderCursor,
+        ignoreShortcutsInMissionControl
     ]
 }
 
@@ -274,12 +287,16 @@ class BoolDefault: Default {
         }
     }
     
-    init(key: String) {
+    init(key: String, defaultValue: Bool = false) {
         self.key = key
-        enabled = UserDefaults.standard.bool(forKey: key)
+        if UserDefaults.standard.object(forKey: key) == nil {
+            enabled = defaultValue
+        } else {
+            enabled = UserDefaults.standard.bool(forKey: key)
+        }
         initialized = true
     }
-    
+
     func load(from codable: CodableDefault) {
         if let value = codable.bool {
             self.enabled = value
